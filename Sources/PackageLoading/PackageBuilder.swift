@@ -9,8 +9,10 @@
 */
 
 import TSCBasic
-import PackageModel
 import TSCUtility
+
+import PackageModel
+import SourceControl
 
 /// An error in the structure or layout of a package.
 public enum ModuleError: Swift.Error {

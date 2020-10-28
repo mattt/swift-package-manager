@@ -12,10 +12,11 @@ import XCTest
 import SPMTestSupport
 
 import TSCBasic
-import PackageModel
 import TSCUtility
 
 import PackageLoading
+import PackageModel
+import SourceControl
 
 /// Tests for the handling of source layout conventions.
 class PackageBuilderTests: XCTestCase {

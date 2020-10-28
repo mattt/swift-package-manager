@@ -122,7 +122,7 @@ let package = Package(
         .target(
             /** Package model conventions and loading support */
             name: "PackageLoading",
-            dependencies: ["SwiftToolsSupport-auto", "PackageModel"]),
+            dependencies: ["SwiftToolsSupport-auto", "PackageModel", "SourceControl"]),
 
         // MARK: Package Dependency Resolution
 

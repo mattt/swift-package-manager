@@ -8,6 +8,7 @@
 
 add_library(SourceControl
   GitRepository.swift
+  RemoteArtifact.swift
   Repository.swift
   RepositoryManager.swift
   SwiftPMConfig.swift)

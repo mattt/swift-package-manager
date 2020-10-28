@@ -16,7 +16,6 @@ add_library(PackageLoading
   PackageBuilder.swift
   PackageDescription4Loader.swift
   PlatformRegistry.swift
-  RemoteArtifact.swift
   Target+PkgConfig.swift
   TargetSourcesBuilder.swift
   ToolsVersionLoader.swift
