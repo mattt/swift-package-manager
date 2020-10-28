@@ -1908,3 +1908,16 @@ fileprivate extension Triple.OS {
         }
     }
 }
+
+fileprivate extension SystemPackageProviderDescription {
+    var installText: String {
+        switch self {
+        case .brew(let packages):
+            return "    brew install \(packages.joined(separator: " "))\n"
+        case .apt(let packages):
+            return "    apt-get install \(packages.joined(separator: " "))\n"
+        case .yum(let packages):
+            return "    yum install \(packages.joined(separator: " "))\n"
+        }
+    }
+}

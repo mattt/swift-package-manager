@@ -96,18 +96,7 @@ public func pkgConfigArgs(for target: SystemLibraryTarget, diagnostics: Diagnost
     }
 }
 
-extension SystemPackageProviderDescription {
-    public var installText: String {
-        switch self {
-        case .brew(let packages):
-            return "    brew install \(packages.joined(separator: " "))\n"
-        case .apt(let packages):
-            return "    apt-get install \(packages.joined(separator: " "))\n"
-        case .yum(let packages):
-            return "    yum install \(packages.joined(separator: " "))\n"
-        }
-    }
-
+fileprivate extension SystemPackageProviderDescription {
     /// Check if the provider is available for the current platform.
     var isAvailable: Bool {
         guard let platform = Platform.currentPlatform else { return false }
