@@ -12,6 +12,7 @@ add_library(PackageModel
   BuildSettings.swift
   Diagnostics.swift
   Manifest.swift
+  Manifest/FileRuleDescription.swift
   Manifest/PackageConditionDescription.swift
   Manifest/PackageDependencyDescription.swift
   Manifest/PlatformDescription.swift
