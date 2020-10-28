@@ -12,6 +12,7 @@ import TSCBasic
 import TSCUtility
 
 import PackageModel
+import struct PackageModel.Platform
 import SourceControl
 
 /// An error in the structure or layout of a package.
@@ -841,15 +842,18 @@ public final class PackageBuilder {
     }
 
     func buildConditions(from condition: PackageConditionDescription?) -> [PackageConditionProtocol] {
+        guard let condition = condition else { return [] }
+
         var conditions: [PackageConditionProtocol] = []
 
-        if let config = condition?.config.flatMap({ BuildConfiguration(rawValue: $0) }) {
+        if let config = condition.config.flatMap({ BuildConfiguration(rawValue: $0) }) {
             let condition = ConfigurationCondition(configuration: config)
             conditions.append(condition)
         }
 
-        if let platforms = condition?.platformNames.compactMap({ platformRegistry.platformByName[$0] }), !platforms.isEmpty {
-            let condition = PlatformsCondition(platforms: platforms)
+        let conditionalPlatforms = platforms.filter { condition.platformNames.contains($0.name) }
+        if !conditionalPlatforms.isEmpty {
+            let condition = PlatformsCondition(platforms: conditionalPlatforms)
             conditions.append(condition)
         }
 
@@ -866,7 +870,7 @@ public final class PackageBuilder {
 
         /// Add each declared platform to the supported platforms list.
         for platform in manifest.platforms {
-            let declaredPlatform = platformRegistry.platformByName[platform.platformName]!
+            guard let declaredPlatform = platforms.first(where: { $0.name == platform.platformName }) else { continue }
             var version = PlatformVersion(platform.version)
 
             if let xcTestMinimumDeploymentTarget = xcTestMinimumDeploymentTargets[declaredPlatform], isTest, version < xcTestMinimumDeploymentTarget {
@@ -883,14 +887,12 @@ public final class PackageBuilder {
         }
 
         // Find the undeclared platforms.
-        let remainingPlatforms = Set(platformRegistry.platformByName.keys).subtracting(supportedPlatforms.map({ $0.platform.name }))
+        let remainingPlatforms = platforms.filter { platform in !supportedPlatforms.contains(where: { $0.platform.name == platform.name })}
 
         /// Start synthesizing for each undeclared platform.
-        for platformName in remainingPlatforms.sorted() {
-            let platform = platformRegistry.platformByName[platformName]!
-
+        for platform in remainingPlatforms.sorted() {
             let oldestSupportedVersion: PlatformVersion
-            if let xcTestMinimumDeploymentTarget = xcTestMinimumDeploymentTargets[platform], isTest {
+            if isTest, let xcTestMinimumDeploymentTarget = xcTestMinimumDeploymentTargets[platform] {
                 oldestSupportedVersion = xcTestMinimumDeploymentTarget
             } else {
                 oldestSupportedVersion = platform.oldestSupportedVersion
@@ -909,12 +911,9 @@ public final class PackageBuilder {
         return supportedPlatforms
     }
     // Keep two sets of supported platforms, based on the `isTest` parameter.
-    private var _platforms = [Bool:[SupportedPlatform]]()
+    private var _platforms: [Bool: [SupportedPlatform]] = [:]
 
-    /// The platform registry instance.
-    private var platformRegistry: PlatformRegistry {
-        return PlatformRegistry.default
-    }
+    private var platforms: [Platform] = Platform.allCases
 
     /// Computes the swift version to use for this manifest.
     private func swiftVersion() throws -> SwiftLanguageVersion {

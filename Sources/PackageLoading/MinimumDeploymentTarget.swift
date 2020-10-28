@@ -8,20 +8,18 @@
  See http://swift.org/CONTRIBUTORS.txt for Swift project authors
  */
 
-import PackageModel
 import TSCBasic
+import PackageModel
 
 public struct MinimumDeploymentTarget {
-    public let xcTestMinimumDeploymentTargets: [PackageModel.Platform:PlatformVersion]
+    public let xcTestMinimumDeploymentTargets: [Platform: PlatformVersion]
 
-    public static let `default`: MinimumDeploymentTarget = .init()
+    public static let `default`: MinimumDeploymentTarget = .init(platforms: Platform.allCases)
 
-    public init() {
-        xcTestMinimumDeploymentTargets = PlatformRegistry.default.knownPlatforms.reduce([PackageModel.Platform:PlatformVersion]()) {
-            var dict = $0
-            dict[$1] = Self.computeXCTestMinimumDeploymentTarget(for: $1)
-            return dict
-        }
+    public init(platforms: [Platform]) {
+        self.xcTestMinimumDeploymentTargets = Dictionary(uniqueKeysWithValues: platforms.map {
+            ($0, Self.computeXCTestMinimumDeploymentTarget(for: $0))
+        })
     }
 
     static func computeMinimumDeploymentTarget(of binaryPath: AbsolutePath) throws -> PlatformVersion? {
@@ -37,7 +35,7 @@ public struct MinimumDeploymentTarget {
         return try computeMinimumDeploymentTarget(of: xcTestPath)
     }
 
-    static func computeXCTestMinimumDeploymentTarget(for platform: PackageModel.Platform) -> PlatformVersion {
+    static func computeXCTestMinimumDeploymentTarget(for platform: Platform) -> PlatformVersion {
         guard let sdkName = platform.sdkName else {
             return platform.oldestSupportedVersion
         }
@@ -57,7 +55,7 @@ public struct MinimumDeploymentTarget {
     }
 }
 
-private extension PackageModel.Platform {
+fileprivate extension Platform {
     var sdkName: String? {
         switch self {
         case .macOS:

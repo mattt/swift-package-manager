@@ -289,12 +289,13 @@ final class PackagePIFProjectBuilder: PIFProjectBuilder {
                 .append("$(PLATFORM_DIR)/Developer/Library/Frameworks")
         }
 
-        PlatformRegistry.default.knownPlatforms.forEach {
-            guard let platform = PIF.BuildSettings.Platform.from(platform: $0) else { return }
-            guard let supportedPlatform = firstTarget?.getSupportedPlatform(for: $0) else { return }
-            if !supportedPlatform.options.isEmpty {
-                settings[.SPECIALIZATION_SDK_OPTIONS, for: platform] = supportedPlatform.options
-            }
+        PackageModel.Platform.allCases.forEach {
+            guard let platform = PIF.BuildSettings.Platform.from(platform: $0),
+                  let supportedPlatform = firstTarget?.getSupportedPlatform(for: $0),
+                  !supportedPlatform.options.isEmpty
+            else { return }
+
+            settings[.SPECIALIZATION_SDK_OPTIONS, for: platform] = supportedPlatform.options
         }
 
         // Disable signing for all the things since there is no way to configure

@@ -33,7 +33,6 @@ public struct Platform: Equatable, Hashable, Codable {
     public static let android: Platform = Platform(name: "android", oldestSupportedVersion: .unknown)
     public static let windows: Platform = Platform(name: "windows", oldestSupportedVersion: .unknown)
     public static let wasi: Platform = Platform(name: "wasi", oldestSupportedVersion: .unknown)
-
 }
 
 /// Represents a platform supported by a target.
@@ -92,6 +91,18 @@ public struct PlatformVersion: Equatable, Hashable, Codable {
         default:
             fatalError("Unexpected number of components \(components)")
         }
+    }
+}
+
+extension Platform: CaseIterable {
+    public static var allCases: [Platform] {
+        [.macOS, .iOS, .tvOS, .watchOS, .linux, .windows, .android, .wasi]
+    }
+}
+
+extension Platform: Comparable {
+    public static func < (lhs: Platform, rhs: Platform) -> Bool {
+        return (lhs.name, lhs.oldestSupportedVersion) < (rhs.name, rhs.oldestSupportedVersion)
     }
 }
 
