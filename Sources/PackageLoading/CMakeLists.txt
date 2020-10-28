@@ -10,6 +10,7 @@ add_library(PackageLoading
   Diagnostics.swift
   ManifestBuilder.swift
   ManifestLoader.swift
+  ManifestResourceProvider.swift
   MinimumDeploymentTarget.swift
   ModuleMapGenerator.swift
   PackageBuilder.swift
