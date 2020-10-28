@@ -15,174 +15,6 @@ import PackageModel
 import struct PackageModel.Platform
 import SourceControl
 
-/// An error in the structure or layout of a package.
-public enum ModuleError: Swift.Error {
-
-    /// Describes a way in which a package layout is invalid.
-    public enum InvalidLayoutType {
-        case multipleSourceRoots([AbsolutePath])
-        case modulemapInSources(AbsolutePath)
-        case modulemapMissing(AbsolutePath)
-    }
-
-    /// Indicates two targets with the same name and their corresponding packages.
-    case duplicateModule(String, [String])
-
-    /// The referenced target could not be found.
-    case moduleNotFound(String, TargetDescription.TargetType)
-
-    /// The artifact for the binary target could not be found.
-    case artifactNotFound(String)
-
-    /// Invalid custom path.
-    case invalidCustomPath(target: String, path: String)
-
-    /// Package layout is invalid.
-    case invalidLayout(InvalidLayoutType)
-
-    /// The manifest has invalid configuration wrt type of the target.
-    case invalidManifestConfig(String, String)
-
-    /// The target dependency declaration has cycle in it.
-    case cycleDetected((path: [String], cycle: [String]))
-
-    /// The public headers directory is at an invalid path.
-    case invalidPublicHeadersDirectory(String)
-
-    /// The sources of a target are overlapping with another target.
-    case overlappingSources(target: String, sources: [AbsolutePath])
-
-    /// We found multiple LinuxMain.swift files.
-    case multipleLinuxMainFound(package: String, linuxMainFiles: [AbsolutePath])
-
-    /// The tools version in use is not compatible with target's sources.
-    case incompatibleToolsVersions(package: String, required: [SwiftLanguageVersion], current: ToolsVersion)
-
-    /// The target path is outside the package.
-    case targetOutsidePackage(package: String, target: String)
-
-    /// Unsupported target path
-    case unsupportedTargetPath(String)
-
-    /// Invalid header search path.
-    case invalidHeaderSearchPath(String)
-
-    /// Default localization not set in the presence of localized resources.
-    case defaultLocalizationNotSet
-}
-
-extension ModuleError: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .duplicateModule(let name, let packages):
-            let packages = packages.joined(separator: ", ")
-            return "multiple targets named '\(name)' in: \(packages)"
-        case .moduleNotFound(let target, let type):
-            let folderName = type == .test ? "Tests" : "Sources"
-            return "Source files for target \(target) should be located under '\(folderName)/\(target)', or a custom sources path can be set with the 'path' property in Package.swift"
-        case .artifactNotFound(let target):
-            return "artifact not found for target '\(target)'"
-        case .invalidLayout(let type):
-            return "package has unsupported layout; \(type)"
-        case .invalidManifestConfig(let package, let message):
-            return "configuration of package '\(package)' is invalid; \(message)"
-        case .cycleDetected(let cycle):
-            return "cyclic dependency declaration found: " +
-                (cycle.path + cycle.cycle).joined(separator: " -> ") +
-                " -> " + cycle.cycle[0]
-        case .invalidPublicHeadersDirectory(let name):
-            return "public headers directory path for '\(name)' is invalid or not contained in the target"
-        case .overlappingSources(let target, let sources):
-            return "target '\(target)' has sources overlapping sources: " +
-                sources.map({ $0.description }).joined(separator: ", ")
-        case .multipleLinuxMainFound(let package, let linuxMainFiles):
-            return "package '\(package)' has multiple linux main files: " +
-                linuxMainFiles.map({ $0.description }).sorted().joined(separator: ", ")
-        case .incompatibleToolsVersions(let package, let required, let current):
-            if required.isEmpty {
-                return "package '\(package)' supported Swift language versions is empty"
-            }
-            return "package '\(package)' requires minimum Swift language version \(required[0]) which is not supported by the current tools version (\(current))"
-        case .targetOutsidePackage(let package, let target):
-            return "target '\(target)' in package '\(package)' is outside the package root"
-        case .unsupportedTargetPath(let targetPath):
-            return "target path '\(targetPath)' is not supported; it should be relative to package root"
-        case .invalidCustomPath(let target, let path):
-            return "invalid custom path '\(path)' for target '\(target)'"
-        case .invalidHeaderSearchPath(let path):
-            return "invalid header search path '\(path)'; header search path should not be outside the package root"
-        case .defaultLocalizationNotSet:
-            return "manifest property 'defaultLocalization' not set; it is required in the presence of localized resources"
-        }
-    }
-}
-
-extension ModuleError.InvalidLayoutType: CustomStringConvertible {
-    public var description: String {
-        switch self {
-        case .multipleSourceRoots(let paths):
-          return "multiple source roots found: " + paths.map({ $0.description }).sorted().joined(separator: ", ")
-        case .modulemapInSources(let path):
-            return "modulemap '\(path)' should be inside the 'include' directory"
-        case .modulemapMissing(let path):
-            return "missing system target module map at '\(path)'"
-        }
-    }
-}
-
-extension Target {
-
-    /// An error in the organization or configuration of an individual target.
-    enum Error: Swift.Error {
-
-        /// The target's name is invalid.
-        case invalidName(path: RelativePath, problem: ModuleNameProblem)
-        enum ModuleNameProblem {
-            /// Empty target name.
-            case emptyName
-        }
-
-        /// The target contains an invalid mix of languages (e.g. both Swift and C).
-        case mixedSources(AbsolutePath)
-    }
-}
-
-extension Target.Error: CustomStringConvertible {
-    var description: String {
-        switch self {
-        case .invalidName(let path, let problem):
-            return "invalid target name at '\(path)'; \(problem)"
-        case .mixedSources(let path):
-            return "target at '\(path)' contains mixed language source files; feature not supported"
-        }
-    }
-}
-
-extension Target.Error.ModuleNameProblem: CustomStringConvertible {
-    var description: String {
-        switch self {
-          case .emptyName:
-            return "target names can not be empty"
-        }
-    }
-}
-
-extension Product {
-    /// An error in a product definition.
-    enum Error: Swift.Error {
-        case moduleEmpty(product: String, target: String)
-    }
-}
-
-extension Product.Error: CustomStringConvertible {
-    var description: String {
-        switch self {
-        case .moduleEmpty(let product, let target):
-            return "target '\(target)' referenced in product '\(product)' is empty"
-        }
-    }
-}
-
 /// Helper for constructing a package following the convention system.
 ///
 /// The 'builder' here refers to the builder pattern and not any build system
@@ -426,12 +258,12 @@ public final class PackageBuilder {
         // At this point the target can't be a system target, make sure manifest doesn't contain
         // system target specific configuration.
         guard manifest.pkgConfig == nil else {
-            throw ModuleError.invalidManifestConfig(
+            throw Package.Error.invalidManifestConfig(
                 manifest.name, "the 'pkgConfig' property can only be used with a System Module Package")
         }
 
         guard manifest.providers == nil else {
-            throw ModuleError.invalidManifestConfig(
+            throw Package.Error.invalidManifestConfig(
                 manifest.name, "the 'providers' property can only be used with a System Module Package")
         }
 
@@ -485,23 +317,23 @@ public final class PackageBuilder {
 
                 // Make sure target is not refenced by absolute path
                 guard let relativeSubPath = try? RelativePath(validating: subpath) else {
-                    throw ModuleError.unsupportedTargetPath(subpath)
+                    throw Package.Error.unsupportedTargetPath(subpath)
                 }
 
                 let path = packagePath.appending(relativeSubPath)
                 // Make sure the target is inside the package root.
                 guard path.contains(packagePath) else {
-                    throw ModuleError.targetOutsidePackage(package: manifest.name, target: target.name)
+                    throw Package.Error.targetOutsidePackage(package: manifest.name, target: target.name)
                 }
                 if fileSystem.isDirectory(path) {
                     return path
                 }
-                throw ModuleError.invalidCustomPath(target: target.name, path: subpath)
+                throw Package.Error.invalidCustomPath(target: target.name, path: subpath)
             } else if target.type == .binary {
                 if let artifact = remoteArtifacts.first(where: { $0.path.basenameWithoutExt == target.name }) {
                     return artifact.path
                 } else {
-                    throw ModuleError.artifactNotFound(target.name)
+                    throw Package.Error.artifactNotFound(target.name)
                 }
             }
 
@@ -519,7 +351,7 @@ public final class PackageBuilder {
                 diagnostics.emit(.targetNameHasIncorrectCase(target: target.name), location: diagnosticLocation())
                 return path
             }
-            throw ModuleError.moduleNotFound(target.name, target.type)
+            throw Package.Error.moduleNotFound(target.name, target.type)
         }
 
         // Create potential targets.
@@ -539,7 +371,7 @@ public final class PackageBuilder {
         let missingModuleNames = allVisibleModuleNames.subtracting(potentialModulesName)
         if let missingModuleName = missingModuleNames.first {
             let type = potentialModules.first(where: { $0.name == missingModuleName })?.type ?? .regular
-            throw ModuleError.moduleNotFound(missingModuleName, type)
+            throw Package.Error.moduleNotFound(missingModuleName, type)
         }
 
         let potentialModuleMap = Dictionary(potentialModules.map({ ($0.name, $0) }), uniquingKeysWith: { $1 })
@@ -563,7 +395,7 @@ public final class PackageBuilder {
         }
         // Look for any cycle in the dependencies.
         if let cycle = findCycle(potentialModules.sorted(by: { $0.name < $1.name }), successors: successors) {
-            throw ModuleError.cycleDetected((cycle.path.map({ $0.name }), cycle.cycle.map({ $0.name })))
+            throw Package.Error.cycleDetected((cycle.path.map({ $0.name }), cycle.cycle.map({ $0.name })))
         }
         // There was no cycle so we sort the targets topologically.
         let potentialModules = try! topologicalSort(potentialModules, successors: successors)
@@ -653,7 +485,7 @@ public final class PackageBuilder {
         if potentialModule.type == .system {
             let moduleMapPath = potentialModule.path.appending(component: moduleMapFilename)
             guard fileSystem.isFile(moduleMapPath) else {
-                throw ModuleError.invalidLayout(.modulemapMissing(moduleMapPath))
+                throw Package.Error.invalidLayout(.modulemapMissing(moduleMapPath))
             }
 
             return SystemLibraryTarget(
@@ -687,7 +519,7 @@ public final class PackageBuilder {
         let publicHeaderComponent = manifestTarget.publicHeadersPath ?? ClangTarget.defaultPublicHeadersComponent
         let publicHeadersPath = potentialModule.path.appending(try RelativePath(validating: publicHeaderComponent))
         guard publicHeadersPath.contains(potentialModule.path) else {
-            throw ModuleError.invalidPublicHeadersDirectory(potentialModule.name)
+            throw Package.Error.invalidPublicHeadersDirectory(potentialModule.name)
         }
 
         let sourcesBuilder = TargetSourcesBuilder(
@@ -706,7 +538,7 @@ public final class PackageBuilder {
         // Make sure defaultLocalization is set if the target has localized resources.
         let hasLocalizedResources = resources.contains(where: { $0.localization != nil })
         if hasLocalizedResources && manifest.defaultLocalization == nil {
-            throw ModuleError.defaultLocalizationNotSet
+            throw Package.Error.defaultLocalizationNotSet
         }
 
         // The name of the bundle, if one is being generated.
@@ -787,7 +619,7 @@ public final class PackageBuilder {
                 // Ensure that the search path is contained within the package.
                 let subpath = try RelativePath(validating: setting.value[0])
                 guard targetRoot.appending(subpath).contains(packagePath) else {
-                    throw ModuleError.invalidHeaderSearchPath(subpath.pathString)
+                    throw Package.Error.invalidHeaderSearchPath(subpath.pathString)
                 }
 
             case .define:
@@ -926,7 +758,7 @@ public final class PackageBuilder {
         // Figure out the swift version from declared list in the manifest.
         if let swiftLanguageVersions = manifest.swiftLanguageVersions {
             guard let swiftVersion = swiftLanguageVersions.sorted(by: >).first(where: { $0 <= ToolsVersion.currentToolsVersion }) else {
-                throw ModuleError.incompatibleToolsVersions(
+                throw Package.Error.incompatibleToolsVersions(
                     package: manifest.name, required: swiftLanguageVersions, current: .currentToolsVersion)
             }
             computedSwiftVersion = swiftVersion
@@ -954,7 +786,7 @@ public final class PackageBuilder {
 
         // Throw if we found any overlapping sources.
         if !overlappingSources.isEmpty {
-            throw ModuleError.overlappingSources(target: target, sources: Array(overlappingSources))
+            throw Package.Error.overlappingSources(target: target, sources: Array(overlappingSources))
         }
     }
 
@@ -994,7 +826,7 @@ public final class PackageBuilder {
 
         // It is an error if there are multiple linux main files.
         if linuxMainFiles.count > 1 {
-            throw ModuleError.multipleLinuxMainFound(
+            throw Package.Error.multipleLinuxMainFound(
                 package: manifest.name, linuxMainFiles: linuxMainFiles.map({ $0 }))
         }
         return linuxMainFiles.first
@@ -1202,7 +1034,7 @@ private struct PotentialModule: Hashable {
     }
 }
 
-private extension Manifest {
+fileprivate extension Manifest {
     /// Returns the names of all the visible targets in the manifest.
     func visibleModuleNames(for productFilter: ProductFilter) -> Set<String> {
         let names = targetsRequired(for: productFilter).flatMap({ target in
@@ -1216,17 +1048,5 @@ private extension Manifest {
             })
         })
         return Set(names)
-    }
-}
-
-extension Sources {
-    var hasSwiftSources: Bool {
-        paths.first?.extension == "swift"
-    }
-
-    var containsMixedLanguage: Bool {
-        let swiftSources = relativePaths.filter{ $0.extension == "swift" }
-        if swiftSources.isEmpty { return false }
-        return swiftSources.count != relativePaths.count
     }
 }

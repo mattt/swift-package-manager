@@ -15,37 +15,11 @@ import Foundation
 /// Name of the module map file recognized by the Clang and Swift compilers.
 public let moduleMapFilename = "module.modulemap"
 
-extension AbsolutePath {
-  fileprivate var moduleEscapedPathString: String {
-    return self.pathString.replacingOccurrences(of: "\\", with: "\\\\")
-  }
-}
-
 /// A protocol for targets which might have a modulemap.
 protocol ModuleMapProtocol {
     var moduleMapPath: AbsolutePath { get }
 
     var moduleMapDirectory: AbsolutePath { get }
-}
-
-extension SystemLibraryTarget: ModuleMapProtocol {
-    var moduleMapDirectory: AbsolutePath {
-        return path
-    }
-
-    public var moduleMapPath: AbsolutePath {
-        return moduleMapDirectory.appending(component: moduleMapFilename)
-    }
-}
-
-extension ClangTarget: ModuleMapProtocol {
-    var moduleMapDirectory: AbsolutePath {
-        return includeDir
-    }
-
-    public var moduleMapPath: AbsolutePath {
-        return moduleMapDirectory.appending(component: moduleMapFilename)
-    }
 }
 
 /// A module map generator for Clang targets.  Module map generation consists of two steps:
@@ -197,19 +171,6 @@ public enum GeneratedModuleMapType {
     case umbrellaDirectory(AbsolutePath)
 }
 
-
-public extension ModuleMapType {
-    /// Returns the type of module map to generate for this kind of module map, or nil to not generate one at all.
-    var generatedModuleMapType: GeneratedModuleMapType? {
-        switch self {
-        case .umbrellaHeader(let path): return .umbrellaHeader(path)
-        case .umbrellaDirectory(let path): return .umbrellaDirectory(path)
-        case .none, .custom(_): return nil
-        }
-    }
-}
-
-
 private extension Diagnostic.Message {
     
     /// Warning emitted if the public-headers directory is missing.
@@ -240,5 +201,11 @@ private extension Diagnostic.Message {
     /// Error emitted if there are other headers next to the parent directory of a nested umbrella header.
     static func umbrellaHeaderParentDirHasSiblingHeaders(targetName: String, umbrellaHeader: AbsolutePath, siblingHeaders: Set<AbsolutePath>) -> Diagnostic.Message {
         .error("target '\(targetName)' has invalid header layout: umbrella header found at '\(umbrellaHeader)', but additional header files exist: \((siblingHeaders.map({ String(describing: $0) }).sorted().joined(separator: ", "))); consider reducing them to one")
+    }
+}
+
+fileprivate extension AbsolutePath {
+    var moduleEscapedPathString: String {
+        return self.pathString.replacingOccurrences(of: "\\", with: "\\\\")
     }
 }

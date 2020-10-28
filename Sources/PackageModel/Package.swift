@@ -86,27 +86,10 @@ public final class Package: ObjectIdentifierProtocol, Codable {
         self.targetSearchPath = targetSearchPath
         self.testTargetSearchPath = testTargetSearchPath
     }
-
-    public enum Error: Swift.Error, Equatable {
-        case noManifest(baseURL: String, version: String?)
-    }
 }
 
 extension Package: CustomStringConvertible {
     public var description: String {
         return name
-    }
-}
-
-extension Package.Error: CustomStringConvertible {
-   public var description: String {
-        switch self {
-        case .noManifest(let baseURL, let version):
-            var string = "\(baseURL) has no Package.swift manifest"
-            if let version = version {
-                string += " for version \(version)"
-            }
-            return string
-        }
     }
 }

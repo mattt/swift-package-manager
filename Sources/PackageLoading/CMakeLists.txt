@@ -15,6 +15,7 @@ add_library(PackageLoading
   ModuleMapGenerator.swift
   PackageBuilder.swift
   PackageDescription4Loader.swift
+  PackageModel+Extensions.swift
   TargetSourcesBuilder.swift
   ToolsVersionLoader.swift
   UserManifestResources.swift)

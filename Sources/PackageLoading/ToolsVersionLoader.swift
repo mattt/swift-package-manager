@@ -8,10 +8,12 @@
  See http://swift.org/CONTRIBUTORS.txt for Swift project authors
 */
 
-import TSCBasic
-import PackageModel
-import TSCUtility
 import Foundation
+
+import TSCBasic
+import TSCUtility
+
+import PackageModel
 
 /// Protocol for the manifest loader interface.
 public protocol ToolsVersionLoaderProtocol {
@@ -24,67 +26,6 @@ public protocol ToolsVersionLoaderProtocol {
     /// - Returns: The tools version.
     /// - Throws: ToolsVersion.Error
     func load(at path: AbsolutePath, fileSystem: FileSystem) throws -> ToolsVersion
-}
-
-extension Manifest {
-    /// Returns the manifest at the given package path.
-    ///
-    /// Version specific manifest is chosen if present, otherwise path to regular
-    /// manfiest is returned.
-    public static func path(
-        atPackagePath packagePath: AbsolutePath,
-        currentToolsVersion: ToolsVersion = .currentToolsVersion,
-        fileSystem: FileSystem
-    ) throws -> AbsolutePath {
-        // Look for a version-specific manifest.
-        for versionSpecificKey in Versioning.currentVersionSpecificKeys {
-            let versionSpecificPath = packagePath.appending(component: Manifest.basename + versionSpecificKey + ".swift")
-            if fileSystem.isFile(versionSpecificPath) {
-                return versionSpecificPath
-            }
-        }
-
-        // Otherwise, check if there is a version-specific manifest that has
-        // a higher tools version than the main Package.swift file.
-        let contents: [String]
-        do { contents = try fileSystem.getDirectoryContents(packagePath) } catch {
-            throw ToolsVersionLoader.Error.inaccessiblePackage(path: packagePath, reason: String(describing: error))
-        }
-        let regex = try! RegEx(pattern: "^Package@swift-(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?.swift$")
-
-        // Collect all version-specific manifests at the given package path.
-        let versionSpecificManifests = Dictionary(contents.compactMap{ file -> (ToolsVersion, String)? in
-            let parsedVersion = regex.matchGroups(in: file)
-            guard parsedVersion.count == 1, parsedVersion[0].count == 3 else {
-                return nil
-            }
-
-            let major = Int(parsedVersion[0][0])!
-            let minor = parsedVersion[0][1].isEmpty ? 0 : Int(parsedVersion[0][1])!
-            let patch = parsedVersion[0][2].isEmpty ? 0 : Int(parsedVersion[0][2])!
-
-            return (ToolsVersion(version: Version(major, minor, patch)), file)
-        }, uniquingKeysWith: { $1 })
-
-        let regularManifest = packagePath.appending(component: filename)
-        let toolsVersionLoader = ToolsVersionLoader(currentToolsVersion: currentToolsVersion)
-
-        // Find the version-specific manifest that statisfies the current tools version.
-        if let versionSpecificCandidate = versionSpecificManifests.keys.sorted(by: >).first(where: { $0 <= currentToolsVersion }) {
-            let versionSpecificManifest = packagePath.appending(component: versionSpecificManifests[versionSpecificCandidate]!)
-
-            // Compare the tools version of this manifest with the regular
-            // manifest and use the version-specific manifest if it has
-            // a greater tools version.
-            let versionSpecificManifestToolsVersion = try toolsVersionLoader.load(file: versionSpecificManifest, fileSystem: fileSystem)
-            let regularManifestToolsVersion = try toolsVersionLoader.load(file: regularManifest, fileSystem: fileSystem)
-            if versionSpecificManifestToolsVersion > regularManifestToolsVersion {
-                return versionSpecificManifest
-            }
-        }
-
-        return regularManifest
-    }
 }
 
 public class ToolsVersionLoader: ToolsVersionLoaderProtocol {
@@ -126,7 +67,7 @@ public class ToolsVersionLoader: ToolsVersionLoaderProtocol {
         return try load(file: file, fileSystem: fileSystem)
     }
 
-    fileprivate func load(file: AbsolutePath, fileSystem: FileSystem) throws -> ToolsVersion {
+    func load(file: AbsolutePath, fileSystem: FileSystem) throws -> ToolsVersion {
         // FIXME: We don't need the entire file, just the first line.
         let contents: ByteString
         do { contents = try fileSystem.readFileContents(file) } catch {

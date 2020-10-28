@@ -393,7 +393,7 @@ private func createResolvedPackages(
                 .map({ $0.package.name })
                 .sorted()
             if packageNames.count > 1 {
-                diagnostics.emit(ModuleError.duplicateModule(targetName, packageNames))
+                diagnostics.emit(Package.Error.duplicateModule(targetName, packageNames))
             }
         }
     }
