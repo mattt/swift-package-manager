@@ -12,7 +12,6 @@ import TSCBasic
 import PackageModel
 import TSCUtility
 import Foundation
-public typealias FileSystem = TSCBasic.FileSystem
 
 public enum ManifestParseError: Swift.Error {
     /// The manifest contains invalid format.
