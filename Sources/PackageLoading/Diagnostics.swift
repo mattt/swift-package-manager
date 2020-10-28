@@ -196,6 +196,36 @@ extension Diagnostic.Message {
     ) -> Self {
         .error("localization directory '\(localizationDirectory)' in target '\(targetName)' contains sub-directories, which is forbidden")
     }
+
+    /// Warning emitted if the public-headers directory is missing.
+    static func missingPublicHeadersDirectory(targetName: String, publicHeadersDir: AbsolutePath) -> Diagnostic.Message {
+        .warning("no include directory found for target '\(targetName)'; libraries cannot be imported without public headers")
+    }
+
+    /// Error emitted if the public-headers directory is inaccessible.
+    static func inaccessiblePublicHeadersDirectory(targetName: String, publicHeadersDir: AbsolutePath, fileSystemError: Error) -> Diagnostic.Message {
+        .error("cannot access public-headers directory for target '\(targetName)': \(String(describing: fileSystemError))")
+    }
+
+    /// Warning emitted if a misnamed umbrella header was found.
+    static func misnamedUmbrellaHeader(misnamedUmbrellaHeader: AbsolutePath, umbrellaHeader: AbsolutePath) -> Diagnostic.Message {
+        .warning("\(misnamedUmbrellaHeader) should be renamed to \(umbrellaHeader) to be used as an umbrella header")
+    }
+
+    /// Error emitted if there are directories next to a top-level umbrella header.
+    static func umbrellaHeaderHasSiblingDirectories(targetName: String, umbrellaHeader: AbsolutePath, siblingDirs: Set<AbsolutePath>) -> Diagnostic.Message {
+        .error("target '\(targetName)' has invalid header layout: umbrella header found at '\(umbrellaHeader)', but directories exist next to it: \(siblingDirs.map({ String(describing: $0) }).sorted().joined(separator: ", ")); consider removing them")
+    }
+
+    /// Error emitted if there are other directories next to the parent directory of a nested umbrella header.
+    static func umbrellaHeaderParentDirHasSiblingDirectories(targetName: String, umbrellaHeader: AbsolutePath, siblingDirs: Set<AbsolutePath>) -> Diagnostic.Message {
+        .error("target '\(targetName)' has invalid header layout: umbrella header found at '\(umbrellaHeader)', but more than one directory exists next to its parent directory: \(siblingDirs.map({ String(describing: $0) }).sorted().joined(separator: ", ")); consider reducing them to one")
+    }
+
+    /// Error emitted if there are other headers next to the parent directory of a nested umbrella header.
+    static func umbrellaHeaderParentDirHasSiblingHeaders(targetName: String, umbrellaHeader: AbsolutePath, siblingHeaders: Set<AbsolutePath>) -> Diagnostic.Message {
+        .error("target '\(targetName)' has invalid header layout: umbrella header found at '\(umbrellaHeader)', but additional header files exist: \((siblingHeaders.map({ String(describing: $0) }).sorted().joined(separator: ", "))); consider reducing them to one")
+    }
 }
 
 public struct ManifestLoadingDiagnostic: DiagnosticData {
