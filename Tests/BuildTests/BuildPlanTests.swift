@@ -48,9 +48,7 @@ private struct MockToolchain: SPMBuildCore.Toolchain {
     }
 }
 
-final class BuildPlanTests: XCTestCase {
-    let inputsDir = AbsolutePath(#file).parentDirectory.appending(components: "Inputs")
-    
+final class BuildPlanTests: XCTestCase {    
     /// The j argument.
     private var j: String {
         return "-j3"

@@ -9,10 +9,12 @@
 */
 
 import TSCBasic
+import TSCUtility
+
 import PackageGraph
 import PackageModel
 import PackageLoading
-import TSCUtility
+import SPMBuildCore
 
 /// Errors encounter during Xcode project generation
 public enum ProjectGenerationError: Swift.Error {

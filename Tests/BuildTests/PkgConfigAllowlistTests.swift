@@ -8,8 +8,9 @@
  See http://swift.org/CONTRIBUTORS.txt for Swift project authors
 */
 
-import PackageLoading
 import XCTest
+
+import Build
 
 final class PkgConfigAllowlistTests: XCTestCase {
     func testSimpleFlags() {

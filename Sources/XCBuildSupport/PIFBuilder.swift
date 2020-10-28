@@ -16,6 +16,7 @@ import TSCUtility
 import PackageModel
 import PackageLoading
 import PackageGraph
+import SPMBuildCore
 
 /// The parameters required by `PIFBuilder`.
 public struct PIFBuilderParameters {

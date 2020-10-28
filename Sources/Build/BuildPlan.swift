@@ -14,7 +14,7 @@ import PackageModel
 import PackageGraph
 import PackageLoading
 import Foundation
-import SPMBuildCore
+@_exported import SPMBuildCore
 
 extension AbsolutePath {
   fileprivate var asSwiftStringLiteralConstant: String {

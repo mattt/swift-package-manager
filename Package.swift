@@ -149,7 +149,7 @@ let package = Package(
         .target(
             /** Generates Xcode projects */
             name: "Xcodeproj",
-            dependencies: ["SwiftToolsSupport-auto", "PackageGraph"]),
+            dependencies: ["SwiftToolsSupport-auto", "SPMBuildCore", "PackageGraph"]),
         .target(
             /** High level functionality */
             name: "Workspace",

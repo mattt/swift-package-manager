@@ -11,23 +11,13 @@
 import XCTest
 
 import TSCBasic
-import PackageModel
-import PackageLoading
 import TSCUtility
+
 import SPMTestSupport
+import Build
+import PackageModel
 
-extension SystemLibraryTarget {
-    convenience init(pkgConfig: String, providers: [SystemPackageProviderDescription] = []) {
-        self.init(
-            name: "Foo",
-            path: AbsolutePath("/fake"),
-            pkgConfig: pkgConfig.isEmpty ? nil : pkgConfig,
-            providers: providers.isEmpty ? nil : providers)
-    }
-}
-
-class PkgConfigTests: XCTestCase {
-
+final class PkgConfigTests: XCTestCase {
     let inputsDir = AbsolutePath(#file).parentDirectory.appending(components: "Inputs")
     let diagnostics = DiagnosticsEngine()
 
@@ -106,5 +96,15 @@ class PkgConfigTests: XCTestCase {
         XCTAssertEqual(result.name, "Dependent")
         XCTAssertEqual(result.cFlags, ["-I/path/to/dependent/include", "-I/path/to/dependency/include"])
         XCTAssertEqual(result.libs, ["-L/path/to/dependent/lib", "-L/path/to/dependency/lib"])
+    }
+}
+
+fileprivate extension SystemLibraryTarget {
+    convenience init(pkgConfig: String, providers: [SystemPackageProviderDescription] = []) {
+        self.init(
+            name: "Foo",
+            path: AbsolutePath("/fake"),
+            pkgConfig: pkgConfig.isEmpty ? nil : pkgConfig,
+            providers: providers.isEmpty ? nil : providers)
     }
 }
