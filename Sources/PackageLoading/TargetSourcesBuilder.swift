@@ -420,10 +420,8 @@ public struct TargetSourcesBuilder {
     }
 }
 
-
-
-extension TargetDescription.Resource.Rule {
-    fileprivate var fileRule: FileRuleDescription.Rule {
+fileprivate extension TargetDescription.Resource.Rule {
+    var fileRule: FileRuleDescription.Rule {
         switch self {
         case .process:
             return .processResource
