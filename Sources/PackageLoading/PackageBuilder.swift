@@ -180,21 +180,6 @@ extension Product.Error: CustomStringConvertible {
     }
 }
 
-/// A structure representing the remote artifact information necessary to construct the package.
-public struct RemoteArtifact {
-
-    /// The URl the artifact was downloaded from.
-    public let url: String
-
-    /// The path to the downloaded artifact.
-    public let path: AbsolutePath
-
-    public init(url: String, path: AbsolutePath) {
-        self.url = url
-        self.path = path
-    }
-}
-
 /// Helper for constructing a package following the convention system.
 ///
 /// The 'builder' here refers to the builder pattern and not any build system
