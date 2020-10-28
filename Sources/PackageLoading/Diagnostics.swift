@@ -187,10 +187,52 @@ extension Diagnostic.Message {
     }
 }
 
-
 public struct ManifestLoadingDiagnostic: DiagnosticData {
     public let output: String
     public let diagnosticFile: AbsolutePath?
 
     public var description: String { output }
 }
+
+public struct PkgConfigDiagnosticLocation: DiagnosticLocation {
+    public let pcFile: String
+    public let target: String
+
+    public init(pcFile: String, target: String) {
+        self.pcFile = pcFile
+        self.target = target
+    }
+
+    public var description: String {
+        return "'\(target)' \(pcFile).pc"
+    }
+}
+
+// FIXME: Kill this.
+public struct PkgConfigGenericDiagnostic: DiagnosticData {
+    public let error: String
+
+    public init(error: String) {
+        self.error = error
+    }
+
+    public var description: String {
+        return error
+    }
+}
+
+// FIXME: Kill this.
+public struct PkgConfigHintDiagnostic: DiagnosticData {
+    public let pkgConfigName: String
+    public let installText: String
+
+    public init(pkgConfigName: String, installText: String) {
+        self.pkgConfigName = pkgConfigName
+        self.installText = installText
+    }
+
+    public var description: String {
+        return "you may be able to install \(pkgConfigName) using your system-packager:\n\(installText)"
+    }
+}
+
