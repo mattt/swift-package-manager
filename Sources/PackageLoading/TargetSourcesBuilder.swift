@@ -585,16 +585,3 @@ extension TargetDescription.Resource.Rule {
         }
     }
 }
-
-extension Diagnostic.Message {
-    static func symlinkInSources(symlink: RelativePath, targetName: String) -> Self {
-        .warning("ignoring symlink at '\(symlink)' in target '\(targetName)'")
-    }
-
-    static func localizationDirectoryContainsSubDirectories(
-        localizationDirectory: RelativePath,
-        targetName: String
-    ) -> Self {
-        .error("localization directory '\(localizationDirectory)' in target '\(targetName)' contains sub-directories, which is forbidden")
-    }
-}
