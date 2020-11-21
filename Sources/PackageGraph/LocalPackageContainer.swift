@@ -6,15 +6,15 @@
 
  See http://swift.org/LICENSE.txt for license information
  See http://swift.org/CONTRIBUTORS.txt for Swift project authors
-*/
+ */
 
 import Dispatch
 
 import Basics
-import TSCBasic
 import PackageLoading
 import PackageModel
 import SourceControl
+import TSCBasic
 import TSCUtility
 
 /// Local package container.
@@ -85,27 +85,27 @@ public final class LocalPackageContainer: PackageContainer {
         self.currentToolsVersion = currentToolsVersion
         self.fileSystem = fileSystem
     }
-    
+
     public func isToolsVersionCompatible(at version: Version) -> Bool {
         fatalError("This should never be called")
     }
-    
+
     public func toolsVersion(for version: Version) throws -> ToolsVersion {
         fatalError("This should never be called")
     }
-    
+
     public func toolsVersionsAppropriateVersionsDescending() throws -> [Version] {
         fatalError("This should never be called")
     }
-    
+
     public func versionsAscending() throws -> [Version] {
         fatalError("This should never be called")
     }
-    
+
     public func getDependencies(at version: Version, productFilter: ProductFilter) throws -> [PackageContainerConstraint] {
         fatalError("This should never be called")
     }
-    
+
     public func getDependencies(at revision: String, productFilter: ProductFilter) throws -> [PackageContainerConstraint] {
         fatalError("This should never be called")
     }
@@ -114,5 +114,55 @@ public final class LocalPackageContainer: PackageContainer {
 extension LocalPackageContainer: CustomStringConvertible  {
     public var description: String {
         return "LocalPackageContainer(\(package.location))"
+    }
+}
+
+public class LocalPackageContainerProvider: PackageContainerProvider {
+    let manifestLoader: ManifestLoaderProtocol
+    let mirrors: DependencyMirrors
+
+    /// The tools version currently in use. Only the container versions less than and equal to this will be provided by
+    /// the container.
+    let currentToolsVersion: ToolsVersion
+
+    /// The tools version loader.
+    let toolsVersionLoader: ToolsVersionLoaderProtocol
+
+    let fileSystem: FileSystem
+
+    public init(
+        mirrors: DependencyMirrors = DependencyMirrors(),
+        manifestLoader: ManifestLoaderProtocol,
+        currentToolsVersion: ToolsVersion = ToolsVersion.currentToolsVersion,
+        toolsVersionLoader: ToolsVersionLoaderProtocol = ToolsVersionLoader(),
+        fileSystem: FileSystem = localFileSystem
+    ) {
+        self.mirrors = mirrors
+        self.manifestLoader = manifestLoader
+        self.currentToolsVersion = currentToolsVersion
+        self.toolsVersionLoader = toolsVersionLoader
+        self.fileSystem = fileSystem
+    }
+
+    public func getContainer(
+        for identifier: PackageReference,
+        skipUpdate: Bool,
+        on queue: DispatchQueue,
+        completion: @escaping (Result<PackageContainer, Swift.Error>) -> Void)
+    {
+        assert(identifier.kind != .remote)
+
+        let container = LocalPackageContainer(
+            package: identifier,
+            mirrors: self.mirrors,
+            manifestLoader: self.manifestLoader,
+            toolsVersionLoader: self.toolsVersionLoader,
+            currentToolsVersion: self.currentToolsVersion,
+            fileSystem: self.fileSystem
+        )
+
+        queue.async {
+            completion(.success(container))
+        }
     }
 }

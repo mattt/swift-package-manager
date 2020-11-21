@@ -682,7 +682,7 @@ public final class ManifestLoader: ManifestLoaderProtocol {
             stream <<< manifestContents
             stream <<< toolsVersion.description
             for key in env.keys.sorted(by: >) {
-                stream <<< key <<< env[key]! // forced unwrap safe
+                stream <<< key <<< env[key]!
             }
             stream <<< swiftpmVersion
             return stream.bytes.sha256Checksum

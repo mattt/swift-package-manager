@@ -125,13 +125,13 @@ extension Package.Dependency.Requirement: Encodable {
             try container.encode(range.upperBound, forKey: .upperBound)
         case .exactItem(let version):
             try container.encode(Kind.exact, forKey: .type)
-            try container.encode(version, forKey: .identifier)
-        case .branchItem(let identifier):
+            try container.encode(version, forKey: .package)
+        case .branchItem(let package):
             try container.encode(Kind.branch, forKey: .type)
-            try container.encode(identifier, forKey: .identifier)
-        case .revisionItem(let identifier):
+            try container.encode(package, forKey: .package)
+        case .revisionItem(let package):
             try container.encode(Kind.revision, forKey: .type)
-            try container.encode(identifier, forKey: .identifier)
+            try container.encode(package, forKey: .package)
         case .localPackageItem:
             try container.encode(Kind.localPackage, forKey: .type)
         }

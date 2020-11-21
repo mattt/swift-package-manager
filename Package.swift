@@ -44,6 +44,7 @@ let package = Package(
                 "PackageModel",
                 "PackageLoading",
                 "PackageGraph",
+                "PackageRegistry",
                 "Build",
                 "Xcodeproj",
                 "Workspace"
@@ -60,6 +61,7 @@ let package = Package(
                 "PackageModel",
                 "PackageLoading",
                 "PackageGraph",
+                "PackageRegistry",
                 "Build",
                 "Xcodeproj",
                 "Workspace"
@@ -120,9 +122,15 @@ let package = Package(
             dependencies: ["SwiftToolsSupport-auto", "Basics"]),
 
         .target(
+            /** Package registry support */
+            name: "PackageRegistry",
+            dependencies: ["SwiftToolsSupport-auto", "Basics", "PackageLoading", "PackageModel"]),
+
+        .target(
             /** Source control operations */
             name: "SourceControl",
             dependencies: ["SwiftToolsSupport-auto", "Basics"]),
+
         .target(
             /** Shim for llbuild library */
             name: "SPMLLBuild",
@@ -144,7 +152,7 @@ let package = Package(
         .target(
             /** Data structures and support for complete package graphs */
             name: "PackageGraph",
-            dependencies: ["SwiftToolsSupport-auto", "Basics", "PackageLoading", "PackageModel", "SourceControl"]),
+            dependencies: ["SwiftToolsSupport-auto", "Basics", "PackageLoading", "PackageModel", "PackageRegistry", "SourceControl"]),
 
         // MARK: Package Collections
         
@@ -268,6 +276,9 @@ let package = Package(
         .testTarget(
             name: "PackageCollectionsTests",
             dependencies: ["SPMTestSupport", "PackageCollections"]),
+        .testTarget(
+            name: "PackageRegistryTests",
+            dependencies: ["SPMTestSupport", "PackageRegistry"]),
         .testTarget(
             name: "SourceControlTests",
             dependencies: ["SourceControl", "SPMTestSupport"]),

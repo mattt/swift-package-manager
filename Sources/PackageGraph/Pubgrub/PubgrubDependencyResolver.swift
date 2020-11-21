@@ -374,7 +374,7 @@ public struct PubgrubDependencyResolver {
                 overriddenPackages[package] = (version: .revision(revisionForDependencies, branch: revision), products: constraint.products)
             } else {
                 revisionForDependencies = revision
-                
+
                 // Mark the package as overridden.
                 overriddenPackages[package] = (version: .revision(revision), products: constraint.products)
             }
@@ -652,7 +652,7 @@ public struct PubgrubDependencyResolver {
                 let counts = try result.get()
                 // forced unwraps safe since we are testing for count and errors above
                 let pkgTerm = undecided.min { counts[$0]! < counts[$1]! }!
-                // at this point the container is cached 
+                // at this point the container is cached
                 let container = try self.provider.getCachedContainer(for: pkgTerm.node.package)
                 // Get the best available version for this package.
                 guard let version = try container.getBestAvailableVersion(for: pkgTerm) else {
@@ -689,7 +689,7 @@ public struct PubgrubDependencyResolver {
                     state.decide(pkgTerm.node, at: version)
                 }
 
-                completion(.success(pkgTerm.node))                
+                completion(.success(pkgTerm.node))
             } catch {
                 completion(.failure(error))
             }
@@ -1262,7 +1262,7 @@ private final class PubGrubPackageContainer {
 
             // We only have version-based requirements at this point.
             guard case .versionSet(let vs) = constraint.requirement else {
-                throw InternalError("Unexpected unversioned requirement: \(constraint)")                
+                throw InternalError("Unexpected unversioned requirement: \(constraint)")
             }
 
             for constraintNode in constraint.nodes() {
@@ -1296,7 +1296,7 @@ private final class PubGrubPackageContainer {
         if constraints.isEmpty {
             return ([:], [:])
         }
-        
+
         func preload(_ versions: [Version]) {
             let sync = DispatchGroup()
             for version in versions {
@@ -1308,7 +1308,7 @@ private final class PubGrubPackageContainer {
             }
             sync.wait()
         }
-        
+
         func compute(_ versions: [Version], upperBound: Bool) -> [PackageReference: Version] {
             var result: [PackageReference: Version] = [:]
             var previousVersion = firstVersion
@@ -1320,12 +1320,12 @@ private final class PubGrubPackageContainer {
                 if index.isMultiple(of: preloadCount) {
                     preload(Array(versions[index ..< min(index + preloadCount, versions.count)]))
                 }
-                
+
                 // Record this version as the bound if we're finding upper bounds since
                 // upper bound is exclusive and record the previous version if we're
                 // finding the lower bound since that is inclusive.
                 let bound = upperBound ? version : previousVersion
-                
+
                 let isToolsVersionCompatible = self.underlying.isToolsVersionCompatible(at: version)
                 for constraint in constraints where !result.keys.contains(constraint.package) {
                     // If we hit a version which doesn't have a compatible tools version then that's the boundary.
@@ -1350,7 +1350,7 @@ private final class PubGrubPackageContainer {
 
                 previousVersion = version
             }
-            
+
             return result
         }
 
