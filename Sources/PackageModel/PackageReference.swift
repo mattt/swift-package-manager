@@ -64,6 +64,11 @@ public struct PackageReference: Codable {
         }
     }
 
+    public init(manifest: Manifest) {
+        let identity = PackageIdentity(url: manifest.url)
+        self.init(identity: identity, kind: manifest.packageKind, location: manifest.url)
+    }
+
     // FIXME: the purpose of this is to allow identity override based on the identity in the manifest which is hacky
     // this should be removed when we remove name from manifest
     /// Create a new package reference object with the given identity.
@@ -71,16 +76,19 @@ public struct PackageReference: Codable {
         return PackageReference(identity: self.identity, kind: self.kind, location: self.location, alternateIdentity: alternateIdentity)
     }
 
-    public static func root(identity: PackageIdentity, path: AbsolutePath) -> PackageReference {
-        PackageReference(identity: identity, kind: .root, location: path.pathString)
+    public static func root(path: AbsolutePath) -> PackageReference {
+        let identity = PackageIdentity(path: path)
+        return PackageReference(identity: identity, kind: .root, location: path.pathString)
     }
 
-    public static func local(identity: PackageIdentity, path: AbsolutePath) -> PackageReference {
-        PackageReference(identity: identity, kind: .local, location: path.pathString)
+    public static func local(path: AbsolutePath) -> PackageReference {
+        let identity = PackageIdentity(path: path)
+        return PackageReference(identity: identity, kind: .local, location: path.pathString)
     }
 
-    public static func remote(identity: PackageIdentity, location: String) -> PackageReference {
-        PackageReference(identity: identity, kind: .remote, location: location)
+    public static func remote(location: String) -> PackageReference {
+        let identity = PackageIdentity(url: location)
+        return PackageReference(identity: identity, kind: .remote, location: location)
     }
 }
 

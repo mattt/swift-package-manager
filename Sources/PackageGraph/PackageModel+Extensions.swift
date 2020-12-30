@@ -28,9 +28,9 @@ extension PackageDependencyDescription {
 
         if requirement == .localPackage {
             let path = AbsolutePath(effectiveURL)
-            return PackageReference.local(identity: identity, path: path)
+            return PackageReference.local(path: path).with(alternateIdentity: identity)
         } else {
-            return PackageReference.remote(identity: identity, location: effectiveURL)
+            return PackageReference.remote(location: effectiveURL).with(alternateIdentity: identity)
         }
     }
 }

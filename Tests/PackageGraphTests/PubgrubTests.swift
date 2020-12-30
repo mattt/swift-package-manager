@@ -54,11 +54,11 @@ private let v1_5Range: VersionSetSpecifier = .range(v1_5..<v2)
 private let v1to3Range: VersionSetSpecifier = .range(v1..<v3)
 private let v2Range: VersionSetSpecifier = .range(v2..<v3)
 
-let aRef = PackageReference.local(identity: PackageIdentity(name: "a"), path: AbsolutePath("/"))
-let bRef = PackageReference.local(identity: PackageIdentity(name: "b"), path: AbsolutePath("/"))
-let cRef = PackageReference.local(identity: PackageIdentity(name: "c"), path: AbsolutePath("/"))
+let aRef = PackageReference.local(path: .root).with(alternateIdentity: PackageIdentity(name: "a"))
+let bRef = PackageReference.local(path: .root).with(alternateIdentity: PackageIdentity(name: "b"))
+let cRef = PackageReference.local(path: .root).with(alternateIdentity: PackageIdentity(name: "c"))
 
-let rootRef = PackageReference.root(identity: PackageIdentity(name: "root"), path: AbsolutePath("/"))
+let rootRef = PackageReference.root(path: .root).with(alternateIdentity: PackageIdentity(name: "root"))
 let rootNode = DependencyResolutionNode.root(package: rootRef)
 let rootCause = try! Incompatibility(Term(rootNode, .exact(v1)), root: rootNode)
 let _cause = try! Incompatibility("cause@0.0.0", root: rootNode)
@@ -301,7 +301,7 @@ final class PubgrubTests: XCTestCase {
 
     func testUpdatePackageIdentifierAfterResolution() {
         let fooURL = "https://example.com/foo"
-        let fooRef = PackageReference.remote(identity: PackageIdentity(url: fooURL), location: fooURL)
+        let fooRef = PackageReference.remote(location: fooURL)
         let foo = MockContainer(package: fooRef, dependenciesByVersion: [v1: [:]])
         foo.updatedPackage = "bar"
 
@@ -395,7 +395,7 @@ final class PubgrubTests: XCTestCase {
                                     root: rootNode), at: .topLevel)
         state2.decide(rootNode, at: v1)
         XCTAssertEqual(state2.solution.assignments.count, 1)
-        try solver2.propagate(state: state2, node: .root(package: .root(identity: PackageIdentity(name: "root"), path: AbsolutePath("/"))))
+        try solver2.propagate(state: state2, node: .root(package: PackageReference.root(path: .root).with(alternateIdentity: PackageIdentity(name: "root"))))
         XCTAssertEqual(state2.solution.assignments.count, 2)
     }
 
@@ -2084,7 +2084,7 @@ class DependencyGraphBuilder {
         if let reference = self.references[packageName] {
             return reference
         }
-        let newReference = PackageReference.remote(identity: PackageIdentity(name: packageName), location: "/\(packageName)")
+        let newReference = PackageReference.remote(location: "/\(packageName)")
         self.references[packageName] = newReference
         return newReference
     }
@@ -2190,7 +2190,7 @@ extension Term: ExpressibleByStringLiteral {
         }
 
         let name = components[0]
-        let packageReference = PackageReference.remote(identity: PackageIdentity(name: name), location: "")
+        let packageReference = PackageReference.remote(location: "").with(alternateIdentity: PackageIdentity(name: name))
 
         guard case let .versionSet(vs) = requirement! else {
             fatalError()
@@ -2203,12 +2203,12 @@ extension Term: ExpressibleByStringLiteral {
 
 extension PackageReference: ExpressibleByStringLiteral {
     public init(stringLiteral value: String) {
-        let ref = PackageReference.remote(identity: PackageIdentity(name: value), location: "")
+        let ref = PackageReference.remote(location: "").with(alternateIdentity: PackageIdentity(name: value))
         self = ref
     }
 
     init(_ name: String) {
-        self = Self.remote(identity: PackageIdentity(name: name), location: "")
+        self = Self.remote(location: "").with(alternateIdentity: PackageIdentity(name: name))
     }
 }
 extension Result where Success == [DependencyResolver.Binding] {

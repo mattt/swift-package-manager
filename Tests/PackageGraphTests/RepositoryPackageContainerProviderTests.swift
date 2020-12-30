@@ -40,7 +40,7 @@ private class MockRepository: Repository {
     }
 
     var packageRef: PackageReference {
-        return PackageReference.remote(identity: PackageIdentity(url: self.url), location: self.url)
+        return PackageReference.remote(location: self.url)
     }
 
     func getTags() throws -> [String] {
@@ -178,7 +178,7 @@ class RepositoryPackageContainerProviderTests: XCTestCase {
             manifestLoader: MockManifestLoader(manifests: [:])
         )
 
-        let ref = PackageReference.remote(identity: PackageIdentity(path: repoPath), location: repoPath.pathString)
+        let ref = PackageReference.remote(location: repoPath.pathString)
         let container = try provider.getContainer(for: ref, skipUpdate: false)
         let v = try container.toolsVersionsAppropriateVersionsDescending().map { $0 }
         XCTAssertEqual(v, ["2.0.3", "1.0.3", "1.0.2", "1.0.1", "1.0.0"])
@@ -233,7 +233,7 @@ class RepositoryPackageContainerProviderTests: XCTestCase {
 
         do {
             let provider = createProvider(ToolsVersion(version: "4.0.0"))
-            let ref = PackageReference.remote(identity: PackageIdentity(url: specifier.url), location: specifier.url)
+            let ref = PackageReference.remote(location: specifier.url)
             let container = try provider.getContainer(for: ref, skipUpdate: false)
             let v = try container.toolsVersionsAppropriateVersionsDescending().map { $0 }
             XCTAssertEqual(v, ["1.0.1"])
@@ -241,7 +241,7 @@ class RepositoryPackageContainerProviderTests: XCTestCase {
 
         do {
             let provider = createProvider(ToolsVersion(version: "4.2.0"))
-            let ref = PackageReference.remote(identity: PackageIdentity(url: specifier.url), location: specifier.url)
+            let ref = PackageReference.remote(location: specifier.url)
             let container = try provider.getContainer(for: ref, skipUpdate: false) as! RepositoryPackageContainer
             XCTAssertTrue(container.validToolsVersionsCache.isEmpty)
             let v = try container.toolsVersionsAppropriateVersionsDescending().map { $0 }
@@ -254,7 +254,7 @@ class RepositoryPackageContainerProviderTests: XCTestCase {
 
         do {
             let provider = createProvider(ToolsVersion(version: "3.0.0"))
-            let ref = PackageReference.remote(identity: PackageIdentity(url: specifier.url), location: specifier.url)
+            let ref = PackageReference.remote(location: specifier.url)
             let container = try provider.getContainer(for: ref, skipUpdate: false)
             let v = try container.toolsVersionsAppropriateVersionsDescending().map { $0 }
             XCTAssertEqual(v, [])
@@ -263,7 +263,7 @@ class RepositoryPackageContainerProviderTests: XCTestCase {
         // Test that getting dependencies on a revision that has unsupported tools version is diganosed properly.
         do {
             let provider = createProvider(ToolsVersion(version: "4.0.0"))
-            let ref = PackageReference.remote(identity: PackageIdentity(url: specifier.url), location: specifier.url)
+            let ref = PackageReference.remote(location: specifier.url)
             let container = try provider.getContainer(for: ref, skipUpdate: false) as! RepositoryPackageContainer
             let revision = try container.getRevision(forTag: "1.0.0")
             do {
@@ -310,7 +310,7 @@ class RepositoryPackageContainerProviderTests: XCTestCase {
             repositoryManager: repositoryManager,
             manifestLoader: MockManifestLoader(manifests: [:])
         )
-        let ref = PackageReference.remote(identity: PackageIdentity(path: repoPath), location: repoPath.pathString)
+        let ref = PackageReference.remote(location: repoPath.pathString)
         let container = try provider.getContainer(for: ref, skipUpdate: false)
         let v = try container.toolsVersionsAppropriateVersionsDescending().map { $0 }
         XCTAssertEqual(v, ["1.0.4-alpha", "1.0.2-dev.2", "1.0.2-dev", "1.0.1", "1.0.0", "1.0.0-beta.1", "1.0.0-alpha.1"])
@@ -350,7 +350,7 @@ class RepositoryPackageContainerProviderTests: XCTestCase {
             repositoryManager: repositoryManager,
             manifestLoader: MockManifestLoader(manifests: [:])
         )
-        let ref = PackageReference.remote(identity: PackageIdentity(path: repoPath), location: repoPath.pathString)
+        let ref = PackageReference.remote(location: repoPath.pathString)
         let container = try provider.getContainer(for: ref, skipUpdate: false)
         let v = try container.toolsVersionsAppropriateVersionsDescending().map { $0 }
         XCTAssertEqual(v, ["2.0.1", "1.0.4", "1.0.2", "1.0.1", "1.0.0"])
@@ -538,7 +538,7 @@ class RepositoryPackageContainerProviderTests: XCTestCase {
             let containerProvider = RepositoryPackageContainerProvider(repositoryManager: repositoryManager, manifestLoader: MockManifestLoader(manifests: [.init(url: packageDir.pathString, version: nil): manifest]))
 
             // Get a hold of the container for the test package.
-            let packageRef = PackageReference.remote(identity: PackageIdentity(path: packageDir), location: packageDir.pathString)
+            let packageRef = PackageReference.remote(location: packageDir.pathString)
             let container = try containerProvider.getContainer(for: packageRef, skipUpdate: false) as! RepositoryPackageContainer
 
             // Simulate accessing a fictitious dependency on the `master` branch, and check that we get back the expected error.
@@ -615,7 +615,7 @@ class RepositoryPackageContainerProviderTests: XCTestCase {
                 )
             )
 
-            let packageReference = PackageReference.remote(identity: PackageIdentity(path: packageDirectory), location: packageDirectory.pathString)
+            let packageReference = PackageReference.remote(location: packageDirectory.pathString)
             let container = try containerProvider.getContainer(for: packageReference, skipUpdate: false)
 
             let forNothing = try container.getDependencies(at: version, productFilter: .specific([]))

@@ -152,10 +152,9 @@ public struct PubgrubDependencyResolver {
 
     /// Execute the resolution algorithm to find a valid assignment of versions.
     public func solve(constraints: [Constraint]) -> Result<[DependencyResolver.Binding], Error> {
-        let root = DependencyResolutionNode.root(package: .root(
-            identity: PackageIdentity(url: "<synthesized-root>"),
-            path: AbsolutePath("/synthesized-root-path")
-        ))
+        let identity = PackageIdentity(url: "<synthesized-root>")
+        let path = AbsolutePath("/synthesized-root-path")
+        let root = DependencyResolutionNode.root(package: PackageReference.root(path: path).with(alternateIdentity: identity))
 
         do {
             // strips state

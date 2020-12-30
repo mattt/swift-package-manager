@@ -852,8 +852,8 @@ final class WorkspaceTests: XCTestCase {
 
         let bRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "B"))
         let cRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "C"))
-        let bRef = PackageReference.remote(identity: PackageIdentity(url: bRepo.url), location: bRepo.url)
-        let cRef = PackageReference.remote(identity: PackageIdentity(url: cRepo.url), location: cRepo.url)
+        let bRef = PackageReference.remote(location: bRepo.url)
+        let cRef = PackageReference.remote(location: cRepo.url)
 
         try workspace.set(
             pins: [bRef: v1_5, cRef: v2],
@@ -908,8 +908,8 @@ final class WorkspaceTests: XCTestCase {
 
         let bRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "B"))
         let cRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "C"))
-        let bRef = PackageReference.remote(identity: PackageIdentity(url: bRepo.url), location: bRepo.url)
-        let cRef = PackageReference.remote(identity: PackageIdentity(url: cRepo.url), location: cRepo.url)
+        let bRef = PackageReference.remote(location: bRepo.url)
+        let cRef = PackageReference.remote(location: cRepo.url)
 
         try workspace.set(
             pins: [bRef: v1],
@@ -965,8 +965,8 @@ final class WorkspaceTests: XCTestCase {
 
         let bRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "B"))
         let cRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "C"))
-        let bRef = PackageReference.remote(identity: PackageIdentity(url: bRepo.url), location: bRepo.url)
-        let cRef = PackageReference.remote(identity: PackageIdentity(url: cRepo.url), location: cRepo.url)
+        let bRef = PackageReference.remote(location: bRepo.url)
+        let cRef = PackageReference.remote(location: cRepo.url)
 
         try workspace.set(
             pins: [bRef: v1_5, cRef: v1_5],
@@ -1016,7 +1016,7 @@ final class WorkspaceTests: XCTestCase {
         )
 
         let cRepo = RepositorySpecifier(url: testWorkspace.urlForPackage(withName: "C"))
-        let cRef = PackageReference.remote(identity: PackageIdentity(url: cRepo.url), location: cRepo.url)
+        let cRef = PackageReference.remote(location: cRepo.url)
 
         try testWorkspace.set(
             pins: [cRef: v1_5],
@@ -1075,8 +1075,8 @@ final class WorkspaceTests: XCTestCase {
 
         let bRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "B"))
         let cRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "C"))
-        let bRef = PackageReference.remote(identity: PackageIdentity(url: bRepo.url), location: bRepo.url)
-        let cRef = PackageReference.remote(identity: PackageIdentity(url: cRepo.url), location: cRepo.url)
+        let bRef = PackageReference.remote(location: bRepo.url)
+        let cRef = PackageReference.remote(location: cRepo.url)
 
         try workspace.set(
             pins: [bRef: v1_5],
@@ -1137,8 +1137,8 @@ final class WorkspaceTests: XCTestCase {
 
         let bRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "B"))
         let cRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "C"))
-        let bRef = PackageReference.remote(identity: PackageIdentity(url: bRepo.url), location: bRepo.url)
-        let cRef = PackageReference.remote(identity: PackageIdentity(url: cRepo.url), location: cRepo.url)
+        let bRef = PackageReference.remote(location: bRepo.url)
+        let cRef = PackageReference.remote(location: cRepo.url)
 
         try workspace.set(
             pins: [bRef: v1_5, cRef: v1_5],
@@ -1200,8 +1200,8 @@ final class WorkspaceTests: XCTestCase {
 
         let bRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "B"))
         let cRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "C"))
-        let bRef = PackageReference.remote(identity: PackageIdentity(url: bRepo.url), location: bRepo.url)
-        let cRef = PackageReference.remote(identity: PackageIdentity(url: cRepo.url), location: cRepo.url)
+        let bRef = PackageReference.remote(location: bRepo.url)
+        let cRef = PackageReference.remote(location: cRepo.url)
 
         try workspace.set(
             pins: [bRef: v1_5, cRef: master],
@@ -1262,8 +1262,8 @@ final class WorkspaceTests: XCTestCase {
 
         let bRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "B"))
         let cRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "C"))
-        let bRef = PackageReference.remote(identity: PackageIdentity(url: bRepo.url), location: bRepo.url)
-        let cRef = PackageReference.remote(identity: PackageIdentity(url: cRepo.url), location: cRepo.url)
+        let bRef = PackageReference.remote(location: bRepo.url)
+        let cRef = PackageReference.remote(location: cRepo.url)
 
         try workspace.set(
             pins: [bRef: v1_5, cRef: v1_5],
@@ -1321,8 +1321,8 @@ final class WorkspaceTests: XCTestCase {
 
         let bRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "B"))
         let cRepo = RepositorySpecifier(url: workspace.urlForPackage(withName: "C"))
-        let bRef = PackageReference.remote(identity: PackageIdentity(url: bRepo.url), location: bRepo.url)
-        let cRef = PackageReference.remote(identity: PackageIdentity(url: cRepo.url), location: cRepo.url)
+        let bRef = PackageReference.remote(location: bRepo.url)
+        let cRef = PackageReference.remote(location: cRepo.url)
 
         try workspace.set(
             pins: [bRef: v1_5, cRef: v2],
@@ -1532,7 +1532,7 @@ final class WorkspaceTests: XCTestCase {
 
             let path = AbsolutePath("/tmp/ws/pkgs/Foo")
             let expectedChange = (
-                PackageReference.remote(identity: PackageIdentity(path: path), location: path.pathString),
+                PackageReference.remote(location: path.pathString),
                 stateChange
             )
             guard let change = changes?.first, changes?.count == 1 else {
@@ -4359,7 +4359,7 @@ final class WorkspaceTests: XCTestCase {
 
         // Pin A to 1.0.0, Checkout B to 1.0.0
         let aURL = workspace.urlForPackage(withName: "A")
-        let aRef = PackageReference.remote(identity: PackageIdentity(url: aURL), location: aURL)
+        let aRef = PackageReference.remote(location: aURL)
         let aRepo = workspace.repoProvider.specifierMap[RepositorySpecifier(url: aURL)]!
         let aRevision = try aRepo.resolveRevision(tag: "1.0.0")
         let aState = CheckoutState(revision: aRevision, version: "1.0.0")
@@ -4621,7 +4621,7 @@ final class WorkspaceTests: XCTestCase {
 
         // Pin A to 1.0.0, Checkout A to 1.0.0
         let aURL = workspace.urlForPackage(withName: "A")
-        let aRef = PackageReference.remote(identity: PackageIdentity(url: aURL), location: aURL)
+        let aRef = PackageReference.remote(location: aURL)
         let aRepo = workspace.repoProvider.specifierMap[RepositorySpecifier(url: aURL)]!
         let aRevision = try aRepo.resolveRevision(tag: "1.0.0")
         let aState = CheckoutState(revision: aRevision, version: "1.0.0")

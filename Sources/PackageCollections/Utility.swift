@@ -53,16 +53,15 @@ internal extension Result {
 extension PackageReference {
     /// Initializes a `PackageReference` from `RepositorySpecifier`
     init(repository: RepositorySpecifier, kind: PackageReference.Kind = .remote) {
-        let identity = PackageIdentity(url: repository.url)
         switch kind {
         case .root:
             let path = AbsolutePath(repository.url)
-            self = .root(identity: identity, path: path)
+            self = .root(path: path)
         case .local:
             let path = AbsolutePath(repository.url)
-            self = .local(identity: identity, path: path)
+            self = .local(path: path)
         case .remote:
-            self = .remote(identity: identity, location: repository.url)
+            self = .remote(location: repository.url)
         }
     }
 }
