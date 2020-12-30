@@ -10,6 +10,7 @@
 
 import PackageModel
 import SourceControl
+import TSCBasic
 
 struct MultipleErrors: Error {
     let errors: [Error]
@@ -52,10 +53,15 @@ internal extension Result {
 extension PackageReference {
     /// Initializes a `PackageReference` from `RepositorySpecifier`
     init(repository: RepositorySpecifier, kind: PackageReference.Kind = .remote) {
-        self.init(
-            identity: PackageIdentity(url: repository.url),
-            kind: kind,
-            location: repository.url
-        )
+        switch kind {
+        case .root:
+            let path = AbsolutePath(repository.url)
+            self = .root(path: path)
+        case .local:
+            let path = AbsolutePath(repository.url)
+            self = .local(path: path)
+        case .remote:
+            self = .remote(location: repository.url)
+        }
     }
 }

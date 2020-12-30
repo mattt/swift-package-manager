@@ -105,12 +105,7 @@ private struct LocalPackageContainer: PackageContainer {
 
     // Gets the package reference from the managed dependency or computes it for root packages.
     var identifier: PackageReference {
-        if let identifier = dependency?.packageRef {
-            return identifier
-        } else {
-            let identity = PackageIdentity(url: manifest.url)
-            return .root(identity: identity, path: manifest.path)
-        }
+        return dependency?.packageRef ?? .root(path: manifest.path)
     }
 
     func versionsAscending() throws -> [Version] {

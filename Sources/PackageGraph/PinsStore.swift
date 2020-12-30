@@ -145,21 +145,13 @@ extension PinsStore.Pin: JSONMappable, JSONSerializable {
         }
 
         // backwards compatibility 12/2020
-        let identity: PackageIdentity
-        if let value: PackageIdentity = json.get("identity") {
-            identity = value
-        } else {
-            identity = PackageIdentity(url: location)
-        }
-
-        // backwards compatibility 12/2020
         var alternateIdentity: PackageIdentity? = nil
         if let value: PackageIdentity = json.get("alternate_identity") {
             alternateIdentity = value
         } else if let value: String = json.get("name") {
             alternateIdentity = PackageIdentity(name: value)
         }
-        let package = PackageReference.remote(identity: identity, location: location)
+        let package = PackageReference.remote(location: location)
         self.packageRef = alternateIdentity.map{ package.with(alternateIdentity: $0) } ?? package
         self.state = try json.get("state")
     }

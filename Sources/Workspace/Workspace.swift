@@ -1137,17 +1137,15 @@ extension Workspace {
 
             var inputIdentities: Set<PackageReference> = []
             let inputNodes: [GraphLoadingNode] = root.manifests.map({ manifest in
-                let identity = PackageIdentity(url: manifest.url)
-                let package = PackageReference(identity: identity, kind: manifest.packageKind, location: manifest.url)
+                let package = PackageReference(manifest: manifest)
                 inputIdentities.insert(package)
                 let node = GraphLoadingNode(manifest: manifest, productFilter: .everything)
                 return node
             }) + root.dependencies.compactMap({ dependency in
                 let url = workspace.config.mirrors.effectiveURL(forURL: dependency.url)
-                let identity = PackageIdentity(url: url)
-                let package = PackageReference.remote(identity: identity, location: url)
+                let package = PackageReference.remote(location: url)
                 inputIdentities.insert(package)
-                guard let manifest = manifestsMap[identity] else { return nil }
+                guard let manifest = manifestsMap[package.identity] else { return nil }
                 let node = GraphLoadingNode(manifest: manifest, productFilter: dependency.productFilter)
                 return node
             })
@@ -1156,19 +1154,31 @@ extension Workspace {
             _ = transitiveClosure(inputNodes) { node in
                 return node.manifest.dependenciesRequired(for: node.productFilter).compactMap({ dependency in
                     let url = workspace.config.mirrors.effectiveURL(forURL: dependency.url)
-                    let identity = PackageIdentity(url: url)
-                    let package = PackageReference.remote(identity: identity, location: url)
+                    let package = PackageReference.remote(location: url)
                     requiredIdentities.insert(package)
-                    guard let manifest = manifestsMap[identity] else { return nil }
+                    guard let manifest = manifestsMap[package.identity] else { return nil }
                     return GraphLoadingNode(manifest: manifest, productFilter: dependency.productFilter)
                 })
             }
             // FIXME: This should be an ordered set.
             requiredIdentities = inputIdentities.union(requiredIdentities)
 
-            let availableIdentities: Set<PackageReference> = Set(manifestsMap.map({
-                let url = workspace.config.mirrors.effectiveURL(forURL: $0.1.url)
-                return PackageReference(identity: $0.key, kind: $0.1.packageKind, location: url)
+            let availableIdentities: Set<PackageReference> = Set(manifestsMap.map({ (identity, manifest) in
+                let url = workspace.config.mirrors.effectiveURL(forURL: manifest.url)
+
+                let package: PackageReference
+                switch manifest.packageKind {
+                case .root:
+                    let path = AbsolutePath(url)
+                    package = .root(path: path)
+                case .local:
+                    let path = AbsolutePath(url)
+                    package = .local(path: path)
+                case .remote:
+                    package = .remote(location: url)
+                }
+
+                return package.with(alternateIdentity: identity)
             }))
             // We should never have loaded a manifest we don't need.
             assert(availableIdentities.isSubset(of: requiredIdentities), "\(availableIdentities) | \(requiredIdentities)")
@@ -1187,16 +1197,11 @@ extension Workspace {
                 // resolver doesn't try to resolve it.
                 switch managedDependency.state {
                 case .edited:
-                    // FIXME: We shouldn't need to construct a new package reference object here.
-                    // We should get the correct one from managed dependency object.
-                    let ref = PackageReference.local(
-                        identity: managedDependency.packageRef.identity,
-                        path: AbsolutePath(managedDependency.packageRef.location)
-                    )
                     let constraint = PackageContainerConstraint(
-                        package: ref,
+                        package: managedDependency.packageRef,
                         requirement: .unversioned,
-                        products: productFilter)
+                        products: productFilter
+                    )
                     allConstraints.append(constraint)
                 case .checkout, .local:
                     break
@@ -1219,16 +1224,11 @@ extension Workspace {
                 case .checkout, .local: continue
                 case .edited: break
                 }
-                // FIXME: We shouldn't need to construct a new package reference object here.
-                // We should get the correct one from managed dependency object.
-                let ref = PackageReference.local(
-                    identity: managedDependency.packageRef.identity,
-                    path: workspace.path(for: managedDependency)
-                )
                 let constraint = PackageContainerConstraint(
-                    package: ref,
+                    package: managedDependency.packageRef,
                     requirement: .unversioned,
-                    products: productFilter)
+                    products: productFilter
+                )
                 constraints.append(constraint)
             }
             return constraints

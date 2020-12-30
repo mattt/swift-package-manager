@@ -30,8 +30,8 @@ final class PinsStoreTests: XCTestCase {
         let fooRepo = RepositorySpecifier(url: fooPath.pathString)
         let barRepo = RepositorySpecifier(url: barPath.pathString)
         let revision = Revision(identifier: "81513c8fd220cf1ed1452b98060cd80d3725c5b7")
-        let fooRef = PackageReference.remote(identity: foo, location: fooRepo.url)
-        let barRef = PackageReference.remote(identity: bar, location: barRepo.url)
+        let fooRef = PackageReference.remote(location: fooRepo.url)
+        let barRef = PackageReference.remote(location: barRepo.url)
 
         let state = CheckoutState(revision: revision, version: v1)
         let pin = PinsStore.Pin(packageRef: fooRef, state: state)
@@ -191,9 +191,7 @@ final class PinsStoreTests: XCTestCase {
         try store.saveState()
         XCTAssertFalse(fs.exists(pinsFile))
 
-        let fooPath = AbsolutePath("/foo")
-        let foo = PackageIdentity(path: fooPath)
-        let fooRef = PackageReference.remote(identity: foo, location: fooPath.pathString)
+        let fooRef = PackageReference.remote(location: "/foo")
         let revision = Revision(identifier: "81513c8fd220cf1ed1452b98060cd80d3725c5b7")
         store.pin(packageRef: fooRef, state: CheckoutState(revision: revision, version: v1))
 
