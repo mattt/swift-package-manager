@@ -53,12 +53,7 @@ public struct PackageReference: Codable {
         }
     }
 
-    /// Create a package reference given its identity and repository.
-    public init(identity: PackageIdentity, kind: Kind, location: String) {
-        self.init(identity: identity, kind: kind, location: location, alternateIdentity: nil)
-    }
-
-    private init(identity: PackageIdentity, kind: Kind, location: String, alternateIdentity: PackageIdentity?) {
+    private init(identity: PackageIdentity, kind: Kind, location: String, alternateIdentity: PackageIdentity? = nil) {
         self.identity = identity
         self.location = location
         self.kind = kind

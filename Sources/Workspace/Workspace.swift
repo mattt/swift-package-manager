@@ -1138,7 +1138,7 @@ extension Workspace {
             var inputIdentities: Set<PackageReference> = []
             let inputNodes: [GraphLoadingNode] = root.manifests.map({ manifest in
                 let identity = PackageIdentity(url: manifest.url)
-                let package = PackageReference(identity: identity, kind: manifest.packageKind, location: manifest.url)
+                let package = PackageReference.root(identity: identity, path: manifest.path)
                 inputIdentities.insert(package)
                 let node = GraphLoadingNode(manifest: manifest, productFilter: .everything)
                 return node
@@ -1166,9 +1166,19 @@ extension Workspace {
             // FIXME: This should be an ordered set.
             requiredIdentities = inputIdentities.union(requiredIdentities)
 
-            let availableIdentities: Set<PackageReference> = Set(manifestsMap.map({
-                let url = workspace.config.mirrors.effectiveURL(forURL: $0.1.url)
-                return PackageReference(identity: $0.key, kind: $0.1.packageKind, location: url)
+            let availableIdentities: Set<PackageReference> = Set(manifestsMap.map({ (identity, manifest) in
+                let url = workspace.config.mirrors.effectiveURL(forURL: manifest.url)
+
+                switch manifest.packageKind {
+                case .root:
+                    let path = AbsolutePath(url)
+                    return .root(identity: identity, path: path)
+                case .local:
+                    let path = AbsolutePath(url)
+                    return .local(identity: identity, path: path)
+                case .remote:
+                    return .remote(identity: identity, location: url)
+                }
             }))
             // We should never have loaded a manifest we don't need.
             assert(availableIdentities.isSubset(of: requiredIdentities), "\(availableIdentities) | \(requiredIdentities)")
