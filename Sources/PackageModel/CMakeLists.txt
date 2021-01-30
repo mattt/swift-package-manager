@@ -25,6 +25,7 @@ add_library(PackageModel
   PackageIdentity.swift
   PackageIdentity/CanonicalPackageIdentity.swift
   PackageIdentity/LegacyPackageIdentity.swift
+  PackageIdentity/NamespaceScopedPackageIdentity.swift
   PackageReference.swift
   Platform.swift
   Product.swift
