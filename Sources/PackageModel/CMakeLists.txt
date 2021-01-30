@@ -23,6 +23,8 @@ add_library(PackageModel
   ModuleMapType.swift
   Package.swift
   PackageIdentity.swift
+  PackageIdentity/CanonicalPackageIdentity.swift
+  PackageIdentity/LegacyPackageIdentity.swift
   PackageReference.swift
   Platform.swift
   Product.swift
