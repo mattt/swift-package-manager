@@ -34,6 +34,8 @@ public struct PackageReference: Codable {
     /// The name of the package, if available.
     public var name: String
 
+    public var namespace: String = "" // FIXME
+
     /// The path of the package.
     ///
     /// This could be a remote repository, local repository or local package.

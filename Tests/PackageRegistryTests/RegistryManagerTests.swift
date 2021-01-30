@@ -27,8 +27,6 @@ final class RegistryManagerTests: XCTestCase {
     private let queue = DispatchQueue(label: "org.swift.registry.tests")
 
     class override func setUp() {
-        PackageModel._useLegacyIdentities = false
-
         RegistryManager.archiverFactory = { _ in
             return MockArchiver()
         }
@@ -42,19 +40,19 @@ final class RegistryManagerTests: XCTestCase {
 
                 let result: Result<HTTPClientResponse, Error>
                 switch (request.method, request.url.absoluteString.lowercased()) {
-                case (.head, "https://github.com/mona/linkedlist"):
-                    headers.add(name: "Location", value: "https://pkg.swift.github.com/github.com/mona/LinkedList")
+                case (.head, "https://github.com/@mona/linkedlist"):
+                    headers.add(name: "Location", value: "https://packages.swift.org/@mona/LinkedList")
 
                     result = .success(HTTPClientResponse(statusCode: 303, headers: headers, body: nil))
-                case (.get, "https://pkg.swift.github.com/github.com/mona/linkedlist"):
+                case (.get, "https://packages.swift.org/@mona/linkedlist"):
                     let data = #"""
                     {
                         "releases": {
                             "1.1.1": {
-                                "url": "https://packages.example.com/mona/LinkedList/1.1.1"
+                                "url": "https://packages.example.com/@mona/LinkedList/1.1.1"
                             },
                             "1.1.0": {
-                                "url": "https://packages.example.com/mona/LinkedList/1.1.0",
+                                "url": "https://packages.example.com/@mona/LinkedList/1.1.0",
                                 "problem": {
                                     "status": 410,
                                     "title": "Gone",
@@ -62,7 +60,7 @@ final class RegistryManagerTests: XCTestCase {
                                 }
                             },
                             "1.0.0": {
-                                "url": "https://packages.example.com/mona/LinkedList/1.0.0"
+                                "url": "https://packages.example.com/@mona/LinkedList/1.0.0"
                             }
                         }
                     }
@@ -73,7 +71,7 @@ final class RegistryManagerTests: XCTestCase {
                     headers.add(name: "Content-Length", value: "\(data.count)")
 
                     result = .success(HTTPClientResponse(statusCode: 200, headers: headers, body: data))
-                case (.get, "https://pkg.swift.github.com/github.com/mona/linkedlist/1.1.1/package.swift"):
+                case (.get, "https://packages.swift.org/@mona/linkedlist/1.1.1/package.swift"):
                     let data = #"""
                     // swift-tools-version:5.0
                     import PackageDescription
@@ -97,7 +95,7 @@ final class RegistryManagerTests: XCTestCase {
                     headers.add(name: "Content-Length", value: "\(data.count)")
 
                     result = .success(HTTPClientResponse(statusCode: 200, headers: headers, body: data))
-                case (.get, "https://pkg.swift.github.com/github.com/mona/linkedlist/1.1.1.zip"):
+                case (.get, "https://packages.swift.org/@mona/linkedlist/1.1.1.zip"):
                     let archive = emptyZipFile
 
                     headers.add(name: "Content-Type", value: "application/zip")
@@ -119,113 +117,80 @@ final class RegistryManagerTests: XCTestCase {
         super.setUp()
     }
 
-    func testDiscoverPackageRegistry() {
-        let identity = PackageIdentity(url: "https://github.com/mona/LinkedList")
-        let package = PackageReference.init(identity: identity, kind: .remote, location: "/LinkedList")
-        let expectation = XCTestExpectation(description: "discover package registry")
+    func testFetchVersions() {
+        let identity = PackageIdentity(url: "https://github.com/@mona/LinkedList")
+        var package = PackageReference(identity: identity, kind: .remote, location: "/LinkedList")
+        package.namespace = "@mona" // FIXME:
+        let expectation = XCTestExpectation(description: "fetch versions")
 
-        RegistryManager.discover(for: package, on: queue) { result in
+        let manager = RegistryManager()
+        manager.fetchVersions(of: package, on: self.queue) { result in
             defer { expectation.fulfill() }
 
-            XCTAssertResultSuccess(result)
+            guard case .success(let versions) = result else {
+                return XCTAssertResultSuccess(result)
+            }
+
+            XCTAssertEqual(versions, ["1.1.1", "1.0.0"])
+            XCTAssertFalse(versions.contains("1.1.0"), "problematic releases shouldn't be included")
         }
 
         wait(for: [expectation], timeout: 10.0)
     }
 
-    func testFetchVersions() {
-        let identity = PackageIdentity(url: "https://github.com/mona/LinkedList")
-        let package = PackageReference(identity: identity, kind: .remote, location: "/LinkedList")
-        let expectation = XCTestExpectation(description: "discover package registry")
-        let nestedExpectation = XCTestExpectation(description: "fetch versions")
-
-        RegistryManager.discover(for: package, on: queue) { result in
-            defer { expectation.fulfill() }
-            guard case .success(let manager) = result else {
-                return XCTAssertResultSuccess(result)
-            }
-
-            manager.fetchVersions(of: package, on: self.queue) { result in
-                defer { nestedExpectation.fulfill() }
-
-                guard case .success(let versions) = result else {
-                    return XCTAssertResultSuccess(result)
-                }
-
-                XCTAssertEqual(versions, ["1.1.1", "1.0.0"])
-                XCTAssertFalse(versions.contains("1.1.0"), "problematic releases shouldn't be included")
-            }
-        }
-
-        wait(for: [expectation, nestedExpectation], timeout: 10.0)
-    }
-
     func testFetchManifest() {
-        let identity = PackageIdentity(url: "https://github.com/mona/LinkedList")
-        let package = PackageReference(identity: identity, kind: .remote, location: "/LinkedList")
-        let expectation = XCTestExpectation(description: "discover package registry")
-        let nestedExpectation = XCTestExpectation(description: "fetch manifest")
+        let identity = PackageIdentity(url: "https://github.com/@mona/LinkedList")
+        var package = PackageReference(identity: identity, kind: .remote, location: "/LinkedList")
+        package.namespace = "@mona" // FIXME:
+        let expectation = XCTestExpectation(description: "fetch manifest")
 
-        RegistryManager.discover(for: package, on: queue) { result in
+        let manager = RegistryManager()
+        let manifestLoader = ManifestLoader(manifestResources: Resources.default)
+        manager.fetchManifest(for: "1.1.1", of: package, using: manifestLoader, on: self.queue) { result in
             defer { expectation.fulfill() }
-            guard case .success(let manager) = result else {
+
+            guard case .success(let manifest) = result else {
                 return XCTAssertResultSuccess(result)
             }
 
-            let manifestLoader = ManifestLoader(manifestResources: Resources.default)
+            XCTAssertEqual(manifest.name, "LinkedList")
 
-            manager.fetchManifest(for: "1.1.1", of: package, using: manifestLoader, on: self.queue) { result in
-                defer { nestedExpectation.fulfill() }
+            XCTAssertEqual(manifest.products.count, 1)
+            XCTAssertEqual(manifest.products.first?.name, "LinkedList")
+            XCTAssertEqual(manifest.products.first?.type, .library(.automatic))
 
-                guard case .success(let manifest) = result else {
-                    return XCTAssertResultSuccess(result)
-                }
+            XCTAssertEqual(manifest.targets.count, 2)
+            XCTAssertEqual(manifest.targets.first?.name, "LinkedList")
+            XCTAssertEqual(manifest.targets.first?.type, .regular)
+            XCTAssertEqual(manifest.targets.last?.name, "LinkedListTests")
+            XCTAssertEqual(manifest.targets.last?.type, .test)
 
-                XCTAssertEqual(manifest.name, "LinkedList")
-
-                XCTAssertEqual(manifest.products.count, 1)
-                XCTAssertEqual(manifest.products.first?.name, "LinkedList")
-                XCTAssertEqual(manifest.products.first?.type, .library(.automatic))
-
-                XCTAssertEqual(manifest.targets.count, 2)
-                XCTAssertEqual(manifest.targets.first?.name, "LinkedList")
-                XCTAssertEqual(manifest.targets.first?.type, .regular)
-                XCTAssertEqual(manifest.targets.last?.name, "LinkedListTests")
-                XCTAssertEqual(manifest.targets.last?.type, .test)
-
-                XCTAssertEqual(manifest.swiftLanguageVersions, [.v4, .v5])
-            }
+            XCTAssertEqual(manifest.swiftLanguageVersions, [.v4, .v5])
         }
 
-        wait(for: [expectation, nestedExpectation], timeout: 10.0)
+        wait(for: [expectation], timeout: 10.0)
     }
 
     func testDownloadSourceArchive() {
-        let identity = PackageIdentity(url: "https://github.com/mona/LinkedList")
-        let package = PackageReference(identity: identity, kind: .remote, location: "/LinkedList")
-        let expectation = XCTestExpectation(description: "discover package registry")
-        let nestedExpectation = XCTestExpectation(description: "download source archive")
+        let identity = PackageIdentity(url: "https://github.com/@mona/LinkedList")
+        var package = PackageReference(identity: identity, kind: .remote, location: "/LinkedList")
+        package.namespace = "@mona" // FIXME:
+        let expectation = XCTestExpectation(description: "download source archive")
 
-        RegistryManager.discover(for: package, on: queue) { result in
+        let manager = RegistryManager()
+        let fileSystem = InMemoryFileSystem()
+        let path = AbsolutePath("/LinkedList-1.1.1")
+        manager.downloadSourceArchive(for: "1.1.1", of: package, into: fileSystem, at: path, on: self.queue) { result in
             defer { expectation.fulfill() }
-            guard case .success(let manager) = result else {
-                return XCTAssertResultSuccess(result)
-            }
 
-            let fs = InMemoryFileSystem()
-            let path = AbsolutePath("/LinkedList-1.1.1")
-            manager.downloadSourceArchive(for: "1.1.1", of: package, into: fs, at: path, on: self.queue) { result in
-                defer { nestedExpectation.fulfill() }
+            guard case .success = result else { return XCTAssertResultSuccess(result) }
 
-                guard case .success = result else { return XCTAssertResultSuccess(result) }
-
-                XCTAssertNoThrow {
-                    let data = try fs.readFileContents(path)
-                    XCTAssertEqual(data, emptyZipFile)
-                }
+            XCTAssertNoThrow {
+                let data = try fileSystem.readFileContents(path)
+                XCTAssertEqual(data, emptyZipFile)
             }
         }
 
-        wait(for: [expectation, nestedExpectation], timeout: 10.0)
+        wait(for: [expectation], timeout: 10.0)
     }
 }

@@ -2359,14 +2359,8 @@ extension Workspace {
                 case .downloaded(let version):
                     // If some source archive dependency has been removed, download it again.
                     // FIXME
-                    RegistryManager.discover(for: dependency.packageRef, diagnosticsEngine: diagnostics, on: queue) { result in
-                        switch result {
-                        case .success(let registryManager):
-                            self.download(package: dependency.packageRef, at: version, with: registryManager, on: self.queue) { _ in }
-                        case .failure(let error):
-                            diagnostics.emit(error)
-                        }
-                    }
+                    let registryManager = RegistryManager(diagnostics: diagnostics)
+                    self.download(package: dependency.packageRef, at: version, with: registryManager, on: self.queue) { _ in }
                 case .edited:
                     // If some edited dependency has been removed, mark it as unedited.
                     //

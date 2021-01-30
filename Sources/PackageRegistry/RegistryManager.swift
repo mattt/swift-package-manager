@@ -29,6 +29,8 @@ public enum RegistryError: Error {
 }
 
 public final class RegistryManager {
+    public static let defaultRegistryURL = Foundation.URL(string: "https://packages.swift.org/")!
+
     internal static var archiverFactory: (FileSystem) -> Archiver = { fileSystem in
         return ZipArchiver(fileSystem: fileSystem)
     }
@@ -42,65 +44,15 @@ public final class RegistryManager {
 
     private static var cache = ThreadSafeKeyValueStore<URL, RegistryManager>()
 
-    private let registryBaseURL: Foundation.URL
+    private let registryURL: Foundation.URL
     private let client: HTTPClientProtocol
 
-    init(registryBaseURL: Foundation.URL, diagnosticEngine: DiagnosticsEngine? = nil) {
-        self.registryBaseURL = registryBaseURL
-        self.client = Self.clientFactory(diagnosticEngine)
-    }
-
-    public class func discover(
-        for package: PackageReference,
-        diagnosticsEngine: DiagnosticsEngine? = nil,
-        on queue: DispatchQueue,
-        completion: @escaping (Result<RegistryManager, Error>) -> Void
+    public init(
+        registryURL: Foundation.URL = defaultRegistryURL,
+        diagnostics: DiagnosticsEngine? = nil
     ) {
-        guard let url = URL(string: "https://\(package.identity)") else {
-            return queue.async {
-                completion(.failure(RegistryError.invalidURL))
-            }
-        }
-
-        if let manager = cache[url] {
-            queue.async {
-                completion(.success(manager))
-            }
-        } else {
-            let request = HTTPClient.Request(
-                method: .head,
-                url: url,
-                headers: [
-                    "Accept": "application/vnd.swift.registry.v1"
-                ]
-            )
-
-            let client = clientFactory(diagnosticsEngine)
-            client.execute(request) { result in
-                switch result {
-                case .success(let response):
-                    if response.statusCode == 303,
-                       response.headers.get("Content-Version").first == "1",
-                       let location = response.headers.get("Location").first,
-                       let redirectedURL = URL(string: location, relativeTo: url)
-                    {
-                        let manager = RegistryManager(registryBaseURL: redirectedURL, diagnosticEngine: diagnosticsEngine)
-                        self.cache[url] = manager
-                        queue.async {
-                            completion(.success(manager))
-                        }
-                    } else {
-                        queue.async {
-                            completion(.failure(RegistryError.invalidResponse))
-                        }
-                    }
-                case .failure(let error):
-                    queue.async {
-                        completion(.failure(error))
-                    }
-                }
-            }
-        }
+        self.registryURL = registryURL
+        self.client = Self.clientFactory(diagnostics)
     }
 
     public func fetchVersions(
@@ -108,9 +60,12 @@ public final class RegistryManager {
         on queue: DispatchQueue,
         completion: @escaping (Result<[Version], Error>) -> Void
     ) {
+        let url = registryURL.appendingPathComponent(package.namespace)
+                             .appendingPathComponent(package.name)
+
         let request = HTTPClient.Request(
             method: .get,
-            url: registryBaseURL,
+            url: url,
             headers: [
                 "Accept": "application/vnd.swift.registry.v1+json"
             ]
@@ -145,8 +100,12 @@ public final class RegistryManager {
         on queue: DispatchQueue,
         completion: @escaping (Result<Manifest, Error>) -> Void
     ) {
-        var components = URLComponents(url: registryBaseURL, resolvingAgainstBaseURL: true)!
-        components.path += "/\(version)/Package.swift"
+        let baseURL = registryURL.appendingPathComponent(package.namespace)
+                                 .appendingPathComponent(package.name)
+                                 .appendingPathComponent(version.description)
+                                 .appendingPathComponent("Package.swift")
+
+        var components = URLComponents(url: baseURL, resolvingAgainstBaseURL: true)!
         if let swiftLanguageVersion = swiftLanguageVersion {
             components.queryItems = [
                 URLQueryItem(name: "swift-version", value: swiftLanguageVersion.rawValue)
@@ -178,7 +137,7 @@ public final class RegistryManager {
                     let contents = ByteString(data)
                     loadManifest(
                         contents,
-                        baseURL: self.registryBaseURL,
+                        baseURL: self.registryURL,
                         manifestLoader: manifestLoader,
                         toolsVersion: toolsVersion,
                         swiftLanguageVersion: swiftLanguageVersion,
@@ -205,12 +164,10 @@ public final class RegistryManager {
         on queue: DispatchQueue,
         completion: @escaping (Result<Void, Error>) -> Void
     ) {
-        var components = URLComponents(url: registryBaseURL, resolvingAgainstBaseURL: true)!
-        components.path += "/\(version).zip"
-
-        guard let url = components.url else {
-            return completion(.failure(RegistryError.invalidURL))
-        }
+        let url = registryURL.appendingPathComponent(package.namespace)
+                             .appendingPathComponent(package.name)
+                             .appendingPathComponent(version.description)
+                             .appendingPathExtension("zip")
 
         let request = HTTPClient.Request(
             method: .get,

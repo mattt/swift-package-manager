@@ -202,30 +202,22 @@ extension RegistryPackageContainerProvider: PackageContainerProvider {
                 completion(.success(container))
             }
         } else {
-            RegistryManager.discover(for: identifier, on: queue) { result in
+            let registryManager = RegistryManager()
+            RegistryPackageContainer.create(
+                for: identifier,
+                mirrors: self.mirrors,
+                registryManager: registryManager,
+                manifestLoader: self.manifestLoader,
+                toolsVersionLoader: self.toolsVersionLoader,
+                currentToolsVersion: self.currentToolsVersion,
+                on: queue
+            ) { result in
                 switch result {
-                case .success(let registryManager):
-                    RegistryPackageContainer.create(
-                        for: identifier,
-                        mirrors: self.mirrors,
-                        registryManager: registryManager,
-                        manifestLoader: self.manifestLoader,
-                        toolsVersionLoader: self.toolsVersionLoader,
-                        currentToolsVersion: self.currentToolsVersion,
-                        on: queue
-                    ) { result in
-                        switch result {
-                        case .success(let container):
-                            self.containerCache[identifier] = container
+                case .success(let container):
+                    self.containerCache[identifier] = container
 
-                            queue.async {
-                                completion(.success(container))
-                            }
-                        case .failure(let error):
-                            queue.async {
-                                completion(.failure(error))
-                            }
-                        }
+                    queue.async {
+                        completion(.success(container))
                     }
                 case .failure(let error):
                     queue.async {
